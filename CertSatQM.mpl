@@ -28,6 +28,8 @@ local decompositionFromBasis;
 local checkMembership;
 local lemma_1_5;
 local natGens;
+local checkSosMultipliers;
+local checkCorrectness;
 export inductiveCert;
 
     sqf := proc(poly)
@@ -74,13 +76,13 @@ export inductiveCert;
     # using the `table` data structure
     zeroPO := proc(nat)
     local elem, i;
-    local basisPO, zerosPO, _po, po;
+    local basisPO, _zerosPO, _po, po;
         basisPO := map(
             _index -> expand(mul(elem, elem in map(i -> nat[i], _index))),
             powerset([seq(i, i=1..nops(nat))])
                       );
-        zerosPO := [seq(0, i=1..2^nops(nat))];
-        _po := zip(`=`, basisPO, zerosPO);
+        _zerosPO := [seq(0, i=1..2^nops(nat))];
+        _po := zip(`=`, basisPO, _zerosPO);
         po := table(_po);
         return po;
     end proc;
@@ -194,7 +196,7 @@ export inductiveCert;
     # - Y contains the intervals which contains the roots in X
     decompositionFromBasis := proc(f, intervals, x)
     local f_roots := [RealDomain:-solve(f = 0, x)];
-    local sep_roots_ords := [], factorable_sos := [];
+    local sep_roots_ords := [], factorable_sos := 1;
     local first_end_point := intervals[1, 1];
         sep_roots_ords := [
             op(sep_roots_ords),
@@ -241,10 +243,8 @@ export inductiveCert;
             for j from 1 to nops(sep_roots_ords[i, 1]) do
                 # sep_roots_ords[i, 1, j, 1] <- root info
                 # sep_roots_ords[i, 1, j, 2] <- multiplicity info
-                factorable_sos := [
-                    op(factorable_sos),
-                    (x-sep_roots_ords[i, 1, j, 1])^iquo(sep_roots_ords[i, 1, j, 2], 2)
-                                  ];
+                factorable_sos := 
+                  factorable_sos*(x-sep_roots_ords[i, 1, j, 1])^iquo(sep_roots_ords[i, 1, j, 2], 2);
                 if modp(sep_roots_ords[i, 1, j, 2], 2) = 1 then
                     simpl_roots[i] := [op(simpl_roots[i]), sep_roots_ords[i, 1, j, 1]];
                 end if;
@@ -252,9 +252,6 @@ export inductiveCert;
             simpl_roots[i] := [simpl_roots[i], sep_roots_ords[i, 2]];
         end do;
 
-        #map(lprint, sep_roots_ords);
-
-        #return sep_roots_ords;
         return factorable_sos, simpl_roots;
     end proc;
 
@@ -287,34 +284,95 @@ export inductiveCert;
         return output;
     end proc;
 
+    checkSosMultipliers := proc(po)
+        print(">> Entries of po:");
+    local sos_multipliers := [entries(po, 'nolist')];
+        map(proc(_p)
+          print(SemiAlgebraic([_p < 0], [x]));
+        end proc, sos_multipliers);
+    end proc;
+
+    checkCorrectness := proc(po, sos_extra, f)
+        local basis_element := [indices(po, 'nolist')];
+        local sos_multiplier := [entries(po, 'nolist')];
+        local i, output := 0;
+        for i from 1 to nops(basis_element) do
+          output := output + sos_multiplier[i]*basis_element[i];
+        end do;
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Original polynomial: ", expand(f)));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Result: ", expand(sos_extra^2*output)));
+
+        return expand(sos_extra^2*output - f);
+    end proc;
+
     # Assumption: SemiAlgebraic(basis) is bounded and non-empty
     inductiveCert := proc(f, basis, x)
         if checkMembership(f, basis, x) = false then
             return false;
         end if;
 
-    local factorable_sos, simpl_roots, tocombine := [];
     local intervals := semiAlgebraicIntervals(basis, x);
     local nat := natGens(intervals, x);
-    local output := unitPO(nat);
+    local output := unitPO(nat), _temp;
+    local todo;
 
+    local factorable_sos, simpl_roots;
         factorable_sos, simpl_roots := decompositionFromBasis(f, intervals, x);
-    local i, size := nops(simpl_roots);
+
+    local i, j, k, size := nops(simpl_roots);
+    local a, b, c1, c2, _gamma;
+
+        # Update output using left factors
+        a := simpl_roots[1, 2, 2];
+        for i from 1 to nops(simpl_roots[1, 1]) do
+            c1 := simpl_roots[1, 1, i];
+            _temp := zeroPO(nat);
+            updateNatEntry(_temp, 1, a - c1);
+            updateNatEntry(_temp, x - a, 1);
+            output := prodPO(output, _temp, nat, x)
+        end do;
+
+        # Update output using in between factors
         for i from 2 to size - 1 do
-            local todo := simpl_roots[i, 1];
-            local a := simpl_roots[i, 2, 1], b := simpl_roots[i, 2, 2];
-            local todo_size := nops(todo);
-            local j := 1;
-            while j <= todo_size do
-                local c1 := todo[1];
-                local c2 := todo[todo_size];
-                local _gamma := lemma_1_5(c1, c2, a, b);
-                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(SemiAlgebraic([(x-c1)*(x-c2)-gamma*(x-a)*(x-b) < 0], [x])));
-                (x-c1)*(x-c2) - _gamma*(x-a)*(x-b);
+            j := 1;
+            todo := simpl_roots[i, 1];
+            k := nops(todo);
+            a := simpl_roots[i, 2, 1]; 
+            b := simpl_roots[i, 2, 2];
+            while j <= k do
+                c1 := todo[j];
+                c2 := todo[k];
+                _gamma := lemma_1_5(c1, c2, a, b);
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(SemiAlgebraic([(x-c1)*(x-c2)-_gamma*(x-a)*(x-b) < 0], [x])));
+
+                _temp := zeroPO(nat);
+                updateNatEntry(_temp, 1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
+                updateNatEntry(_temp, (x-a)*(x-b), _gamma);
+                output := prodPO(output, _temp, nat, x);
+
                 j := j + 1;
-                todo_size := todo_size - 1;
+                k := k - 1;
             end do;
         end do;
-        return simpl_roots;
+
+        # Update output using right factors
+        b := simpl_roots[size, 2, 1];
+        for i from 1 to nops(simpl_roots[size, 1]) do
+            c2 := simpl_roots[size, 1, i];
+            _temp := zeroPO(nat);
+            updateNatEntry(_temp, 1, c2 - b);
+            updateNatEntry(_temp, -(x - b), 1);
+            output := prodPO(output, _temp, nat, x)
+        end do;
+
+
+        #
+        # Verify output
+        #
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, checkSosMultipliers(output));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Check correctness (difference should be zero):", checkCorrectness(output, factorable_sos, f)));
+
+        return output;
     end proc;
 end module;
