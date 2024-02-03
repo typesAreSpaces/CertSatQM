@@ -49,27 +49,29 @@ export inductiveCert;
     end proc;
 
     auxiliarSosStep := proc(sos, _basis_element, x)
-      if sos = 1 then
-        return 1, expand(_basis_element);
-      end if;
+        if sos = 1 then
+            return 1, expand(_basis_element);
+        end if;
 
     local _sos_roots := [solve(sos=0,x)];
     local i, sos_output := 1, basis_element := _basis_element;
     local min_fix := table();
-      for i from 1 to nops(_sos_roots) do
-        if assigned(min_fix[_sos_roots[i]]) = false then
-          min_fix[_sos_roots[i]] := 0;
-        end if;
-        if subs(x = _sos_roots[i], _basis_element) < 0 and min_fix[_sos_roots[i]] < 2 then
-          basis_element := basis_element*(x - _sos_roots[i]);
-          min_fix[_sos_roots[i]] := min_fix[_sos_roots[i]] + 1;
-        else
-          sos_output := sos_output*(x - _sos_roots[i]);
-        end if;
-      end do;
-      return sos_output, expand(basis_element);
+        for i from 1 to nops(_sos_roots) do
+            if assigned(min_fix[_sos_roots[i]]) = false then
+                min_fix[_sos_roots[i]] := 0;
+            end if;
+            if subs(x = _sos_roots[i], _basis_element) < 0 and min_fix[_sos_roots[i]] < 2 then
+                basis_element := basis_element*(x - _sos_roots[i]);
+                min_fix[_sos_roots[i]] := min_fix[_sos_roots[i]] + 1;
+            else
+                sos_output := sos_output*(x - _sos_roots[i]);
+            end if;
+        end do;
+        return sos_output, expand(basis_element);
     end proc;
 
+    # We implement the vector-like data structure
+    # using the `table` data structure
     zeroPO := proc(nat)
     local elem, i;
     local basisPO, zerosPO, _po, po;
@@ -84,9 +86,9 @@ export inductiveCert;
     end proc;
 
     unitPO := proc(nat)
-      local output := zeroPO(nat);
-      output[1] := 1;
-      return output;
+    local output := zeroPO(nat);
+        output[1] := 1;
+        return output;
     end proc;
 
     updateNatEntry := proc(po, nat_i, new_element)
@@ -94,8 +96,6 @@ export inductiveCert;
         return;
     end proc;
 
-    # We implement the vector-like data structure
-    # using the `table` data structure
     addPO := proc(p1, p2, nat)
     local i;
     local output := zeroPO(nat);
@@ -106,8 +106,6 @@ export inductiveCert;
         return output;
     end proc;
 
-    # We implement the vector-like data structure
-    # using the `table` data structure
     prodPO := proc(p1, p2, nat, x)
     local i, j;
     local output := zeroPO(nat);
@@ -117,11 +115,11 @@ export inductiveCert;
         for i from 1 to size do
             for j from 1 to size do
                 if evalb(_indices[i] = _indices[j]) then
-                  output[1] := output[1] + _indices[i]^2*p1[_indices[i]]*p2[_indices[j]];
+                    output[1] := output[1] + _indices[i]^2*p1[_indices[i]]*p2[_indices[j]];
                 else
-                  _basis, _sos := sqf(_indices[i]*_indices[j]);
-                  _sos, _basis := auxiliarSosStep(_sos, _basis, x);
-                  output[_basis] := 
+                    _basis, _sos := sqf(_indices[i]*_indices[j]);
+                    _sos, _basis := auxiliarSosStep(_sos, _basis, x);
+                    output[_basis] :=
                     output[_basis] + _sos*p1[_indices[i]]*p2[_indices[j]];
                 end if;
             end do;
@@ -139,7 +137,7 @@ export inductiveCert;
     local g, T;
         g := subs(x = T + _point, f);
         return ldegree(expand(g), T);
-    end proc; 
+    end proc;
 
     boundInfo := proc(x, bound, eps)
     local i1, i2, j1, j2;
@@ -162,7 +160,7 @@ export inductiveCert;
                     return [min(i1, j1)+eps, max(i1, j1)-eps];
                 end if;
             end if;
-        # This is an equality or unbounded inequality
+            # This is an equality or unbounded inequality
         else
             i1 := simplify(op(bound[1])[1]);
             j1 := simplify(op(bound[1])[2]);
@@ -211,30 +209,30 @@ export inductiveCert;
         for i from 1 to num_intervals - 1 do
             sep_roots_ords :=
             [op(sep_roots_ords),
-              [
-                # TODO
-                # I'm not sure if this should be sorted
-                select
-                  (_root -> 
-                    intervals[i, 2] <= _root and _root <= intervals[i+1,1],
-                  f_roots), 
-                [intervals[i, 2], intervals[i+1, 1]]
-              ]
+             [
+                 # TODO
+                 # I'm not sure if this should be sorted
+                 select
+                 (_root ->
+                  intervals[i, 2] <= _root and _root <= intervals[i+1,1],
+                  f_roots),
+                 [intervals[i, 2], intervals[i+1, 1]]
+             ]
             ];
         end do;
     local last_end_point := intervals[num_intervals, 2];
         sep_roots_ords := [
-          op(sep_roots_ords),
-          [
-            select(_root -> 
-              _root >= last_end_point, f_roots),
-              [last_end_point, infinity]
-          ]
-        ];
+            op(sep_roots_ords),
+            [
+                select(_root ->
+                       _root >= last_end_point, f_roots),
+                [last_end_point, infinity]
+            ]
+                          ];
         sep_roots_ords := map(
-          l -> [map(_root -> [_root, ord(f, x, _root)], l[1]), l[2]],
-          sep_roots_ords
-        );
+            l -> [map(_root -> [_root, ord(f, x, _root)], l[1]), l[2]],
+            sep_roots_ords
+                             );
 
     local simpl_roots := [];
     local k := 1;
@@ -281,19 +279,19 @@ export inductiveCert;
 
     natGens := proc(intervals, x)
     local i;
-    local output := [x-intervals[1, 1]]; 
-      for i from 1 to nops(intervals) - 1 do
-        output := [op(output), (x - intervals[i, 2])*(x - intervals[i+1, 1])];
-      end do; 
-      output := [op(output), -(x - intervals[nops(intervals), 2])];
-      return output;
+    local output := [x-intervals[1, 1]];
+        for i from 1 to nops(intervals) - 1 do
+            output := [op(output), (x - intervals[i, 2])*(x - intervals[i+1, 1])];
+        end do;
+        output := [op(output), -(x - intervals[nops(intervals), 2])];
+        return output;
     end proc;
 
     # Assumption: SemiAlgebraic(basis) is bounded and non-empty
     inductiveCert := proc(f, basis, x)
-      if checkMembership(f, basis, x) = false then
-        return false;
-      end if;
+        if checkMembership(f, basis, x) = false then
+            return false;
+        end if;
 
     local factorable_sos, simpl_roots, tocombine := [];
     local intervals := semiAlgebraicIntervals(basis, x);
