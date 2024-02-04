@@ -1,4 +1,4 @@
-$define ENABLE_DEBUGGING true
+$define ENABLE_DEBUGGING false
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
 
@@ -406,7 +406,7 @@ export cases;
             updateNatEntry(output, -(x - a), (x-a+1)^2/4);
         elif a < b then
             updateNatEntry(output, x - a, (x-b)^2/(b-a));
-            updateNatEntry(output, -(x - b), (x-a)^2);
+            updateNatEntry(output, -(x - b), (x-a)^2/(b-a));
         else
             return case_3_1(b, a);
         end if;
@@ -416,7 +416,7 @@ export cases;
     case_3_2 := proc(a, b, nat, x)
     local output := zeroPO(nat);
         updateNatEntry(output, (x-a), (x-b)^2);
-        updateNatEntry(output, (x-b), (b-a)*(x-a));
+        updateNatEntry(output, (x-a)*(x-b), (b-a));
         return output;
     end proc;
 
@@ -437,10 +437,10 @@ export cases;
     local pDeriv := 2*n*(x + a)*(x - a)*(x - c)
         + (x - (a + c)/2)*((x + a)*(x - a) + (x + a)*(x - c) + (x - a)*(x - c));
     local n_curr := 0;
-    local min_a_c, sols;
+    local min_b, min_a_c, sols;
 
         while true do
-            sols := [RealDomain:-solve(subs({n = n_curr}, pDeriv)=0,x)];
+            sols := [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)];
             min_a_c := min(map(x_arg -> subs({n=n_curr,x=evalf(x_arg)}, p), sols));
             min_b := subs({n=n_curr,x=-b}, p);
             if min_b < min_a_c then
@@ -456,39 +456,79 @@ export cases;
         return s0, s1;
     end proc;
 
-    lemma_3_2 := proc(a, b, d, x)
-    local alpha;
-        if d = -a then
-            alpha := d^2 - b^2;
-            return 1/alpha*(x-b)^2*(x+b)^2, 1/alpha;
+    lemma_3_2 := proc(a, b, c, x)
+    local alpha, beta, s0, s1;
+        if c = b then
+            alpha := c^2 - a^2;
+            return 1/alpha*(x-a)^2*(x+a)^2, 1/alpha;
         else
-            # WORK
-            return 1, 1;
+            beta := (a^2 - b*c - sqrt((b^2 - a^2)*(c^2 - a^2)))/(b - c);
+            alpha := (a + beta)^2*(b - a)*(a+c);
+            s1 := 1/alpha*(x - beta)^2;
+            s0 := (x+a)*(x-a)*(1 + s1*(x+b)*(x-c));
+            #print(">> sign @-a", convert(subs(x=-a, s1*(x+b)*(x-c)), float));
+            #print(">> sign @a", convert(subs(x=a, s1*(x+b)*(x-c)), float));
+            return s0, s1;
         end if;
     end proc;
 
-    # TODO
     case_3_4 := proc(a, b, c, d, nat, x)
         # Assume b = -c, otherwise
         # x \mapsto x + (b+c)/2;
     local _a := a - (b+c)/2, _b := b - (b+c)/2;
     local _c := c - (b+c)/2, _d := d - (b+c)/2;
+        #print(">> a", a);
+        #print(">> b", b);
+        #print(">> c", c);
+        #print(">> d", d);
+        #print(">> _a", _a);
+        #print(">> _b", _b);
+        #print(">> _c", _c);
+        #print(">> _d", _d);
 
         # Compute certificates of g1 in QM(g1 g2 g3)
-    local g1_s0, g1_s1;
-        g1_s0, g1_s1 := lemma_3_1(_c, -_a, _d, x);
+    local g1__1, g1__g1g2g3;
+        g1__1, g1__g1g2g3 := lemma_3_1(_c, -_a, _d, x);
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1_s0 < 0], [x])));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1_s1 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__1 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__g1g2g3 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 in QM(g1 g2 g3)", expand((x-_a)-(g1__1 + g1__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
 
         # Compute certificates of g2 in QM(g1 g2 g3)
-    local g2_s0, g2_s1;
-        g2_s0, g2_s1 := lemma_3_2(_c, -_a, _d, x);
+    local g2__1, g2__g1g2g3;
+        g2__1, g2__g1g2g3 := lemma_3_2(_c, -_a, _d, x);
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__1 < 0], [x])));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__g1g2g3 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g2 in QM(g1 g2 g3)", expand((x-_b)*(x+_b)-(g2__1 + g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
+
+    local g1g2__1 := g1__1*g2__1 + g1__g1g2g3*g2__g1g2g3*((x-_a)*(x-_b)*(x-_c)*(-(x-_d)))^2;
+    local g1g2__g1g2g3 := g1__1*g2__g1g2g3 + g1__g1g2g3*g2__1;
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1 g2 g3)", expand((x-_a)*(x-_b)*(x-_c)-(g1g2__1 + g1g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
+
+    local g1g2g3__g1g3 := g2__1;
+    local g1g2g3__g2 := g2__g1g2g3*((x-_a)*(x-_d))^2;
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 g3 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c)*(-(x-_d))-(g1g2g3__g1g3*((x-_a)*(-(x-_d))) + g1g2g3__g2*(x-_b)*(x-_c)))));
+
+    local cert_g1g3 := case_3_1(_a, _d, map(poly -> subs(x=x+(b+c)/2, poly), nat), x);
+
+    local sos_1 := g1g2__1;
+    local sos_g1 := g1g2__g1g2g3*g1g2g3__g1g3*cert_g1g3[(x-_a)];
+    local sos_g2 := g1g2__g1g2g3*g1g2g3__g2;
+    local sos_g3 := g1g2__g1g2g3*g1g2g3__g1g3*cert_g1g3[-(x-_d)];
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c) - (sos_1 + sos_g1*(x-_a) + sos_g2*(x-_b)*(x-_c) + sos_g3*(-(x-_d))))));
 
     local output := zeroPO(nat);
-        #x := x - (b+c)/2;
         #updateNatEntry(output, nat_gen, sos_multiplier);
-        return g1_s0, g1_s1;
+        updateNatEntry(output, 1, subs(x=x-(b+c)/2, sos_1));
+        updateNatEntry(output, (x-a), subs(x=x-(b+c)/2, sos_g1));
+        updateNatEntry(output, (x-b)*(x-c), subs(x=x-(b+c)/2, sos_g2));
+        updateNatEntry(output, -(x-d), subs(x=x-(b+c)/2, sos_g3));
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
+        return output;
     end proc;
 
     # TODO
@@ -498,8 +538,8 @@ export cases;
 
     # Assume 0 < a < b, 0 < a < c < d
     cases := proc(a, b, c, d, nat, x)
-    local ok1, ok2;
-        ok1, ok2 := case_3_4(a, b, c, d, nat, x);
-        return ok1, ok2;
+    local p;
+        p := case_3_4(a, b, c, d, nat, x);
+        return p;
     end proc;
 end module;
