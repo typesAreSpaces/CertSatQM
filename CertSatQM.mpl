@@ -1,4 +1,4 @@
-$define ENABLE_DEBUGGING false
+$define ENABLE_DEBUGGING true
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
 
@@ -20,17 +20,41 @@ with(SemiAlgebraicSetTools, IsEmpty);
 CertSatQM := module() option package;
 
 local sqf;
+
 local auxiliarSosStep;
 export zeroPO, unitPO, updateNatEntry, addPO, prodPO;
+
 local semiAlgebraicIntervals;
 local ord, boundInfo;
 local decompositionFromBasis;
+
 local checkMembership;
 local lemma_1_5;
 local natGens;
+
 local checkSosMultipliers;
 local checkCorrectness;
+
 export inductiveCert;
+
+# products of the form (x-a), -(x-b), a \leq b
+local case_3_1;
+
+# products of the form (x-a), (x-a)(x-b), a < b
+local case_3_2;
+
+# products of the form (x-a)(x-b), (x-b)(x-c), a < b < c
+local case_3_3;
+
+local lemma_3_1;
+local lemma_3_2;
+# products of the form (x-a), (x-b)(x-c), a < b < c
+local case_3_4;
+
+# products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
+local case_3_5;
+
+export cases;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -243,8 +267,8 @@ export inductiveCert;
             for j from 1 to nops(sep_roots_ords[i, 1]) do
                 # sep_roots_ords[i, 1, j, 1] <- root info
                 # sep_roots_ords[i, 1, j, 2] <- multiplicity info
-                factorable_sos := 
-                  factorable_sos*(x-sep_roots_ords[i, 1, j, 1])^iquo(sep_roots_ords[i, 1, j, 2], 2);
+                factorable_sos :=
+                factorable_sos*(x-sep_roots_ords[i, 1, j, 1])^(2*iquo(sep_roots_ords[i, 1, j, 2], 2));
                 if modp(sep_roots_ords[i, 1, j, 2], 2) = 1 then
                     simpl_roots[i] := [op(simpl_roots[i]), sep_roots_ords[i, 1, j, 1]];
                 end if;
@@ -288,22 +312,22 @@ export inductiveCert;
         print(">> Entries of po:");
     local sos_multipliers := [entries(po, 'nolist')];
         map(proc(_p)
-          print(SemiAlgebraic([_p < 0], [x]));
-        end proc, sos_multipliers);
+                print(SemiAlgebraic([_p < 0], [x]));
+            end proc, sos_multipliers);
     end proc;
 
     checkCorrectness := proc(po, sos_extra, f)
-        local basis_element := [indices(po, 'nolist')];
-        local sos_multiplier := [entries(po, 'nolist')];
-        local i, output := 0;
+    local basis_element := [indices(po, 'nolist')];
+    local sos_multiplier := [entries(po, 'nolist')];
+    local i, output := 0;
         for i from 1 to nops(basis_element) do
-          output := output + sos_multiplier[i]*basis_element[i];
+            output := output + sos_multiplier[i]*basis_element[i];
         end do;
 
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Original polynomial: ", expand(f)));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Result: ", expand(sos_extra^2*output)));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Result: ", expand(sos_extra*output)));
 
-        return expand(sos_extra^2*output - f);
+        return expand(sos_extra*output - f);
     end proc;
 
     # Assumption: SemiAlgebraic(basis) is bounded and non-empty
@@ -338,7 +362,7 @@ export inductiveCert;
             j := 1;
             todo := simpl_roots[i, 1];
             k := nops(todo);
-            a := simpl_roots[i, 2, 1]; 
+            a := simpl_roots[i, 2, 1];
             b := simpl_roots[i, 2, 2];
             while j <= k do
                 c1 := todo[j];
@@ -366,13 +390,116 @@ export inductiveCert;
             output := prodPO(output, _temp, nat, x)
         end do;
 
-
         #
         # Verify output
         #
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, checkSosMultipliers(output));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Check correctness (difference should be zero):", checkCorrectness(output, factorable_sos, f)));
 
+        return factorable_sos, output;
+    end proc;
+
+    case_3_1 := proc(a, b, nat, x)
+    local output := zeroPO(nat);
+        if a = b then
+            updateNatEntry(output, x - a, (x-a-1)^2/4);
+            updateNatEntry(output, -(x - a), (x-a+1)^2/4);
+        elif a < b then
+            updateNatEntry(output, x - a, (x-b)^2/(b-a));
+            updateNatEntry(output, -(x - b), (x-a)^2);
+        else
+            return case_3_1(b, a);
+        end if;
         return output;
+    end proc;
+
+    case_3_2 := proc(a, b, nat, x)
+    local output := zeroPO(nat);
+        updateNatEntry(output, (x-a), (x-b)^2);
+        updateNatEntry(output, (x-b), (b-a)*(x-a));
+        return output;
+    end proc;
+
+    case_3_3 := proc(a, b, c, nat, x)
+    local output := zeroPO(nat);
+    local alpha := (b-a)/(c-b);
+        updateNatEntry(output, (x-a)*(x-b), alpha/(alpha+1)*(x-c)^2);
+        updateNatEntry(output, (x-b)*(x-b), 1/(alpha+1)*(x-a)^2);
+        return output;
+    end proc;
+
+    # Assume 0 < a < b, 0 < a < c
+    lemma_3_1 := proc(a, b, c, x)
+        #print(">> Check 1", evalb(0 < a));
+        #print(">> Check 2", evalb(a < b));
+        #print(">> Check 3", evalb(a < c));
+    local p := (x-a)*(x+a)*(x-c)*(x-(a+c)/2)^(2*n);
+    local pDeriv := 2*n*(x + a)*(x - a)*(x - c)
+        + (x - (a + c)/2)*((x + a)*(x - a) + (x + a)*(x - c) + (x - a)*(x - c));
+    local n_curr := 0;
+    local min_a_c, sols;
+
+        while true do
+            sols := [RealDomain:-solve(subs({n = n_curr}, pDeriv)=0,x)];
+            min_a_c := min(map(x_arg -> subs({n=n_curr,x=evalf(x_arg)}, p), sols));
+            min_b := subs({n=n_curr,x=-b}, p);
+            if min_b < min_a_c then
+                break;
+            end if;
+            n_curr := n_curr + 1;
+        end do;
+
+    local alpha := 1/((b+(a+c)/2)^(2*n_curr)*(b-a)*(b+a)*(b+c));
+    local s1 := alpha*(x-(a+c)/2)^(2*n_curr);
+    local s0 := (x+b)*(1+s1*(x+a)*(x-a)*(x-c));
+
+        return s0, s1;
+    end proc;
+
+    lemma_3_2 := proc(a, b, d, x)
+    local alpha;
+        if d = -a then
+            alpha := d^2 - b^2;
+            return 1/alpha*(x-b)^2*(x+b)^2, 1/alpha;
+        else
+            # WORK
+            return 1, 1;
+        end if;
+    end proc;
+
+    # TODO
+    case_3_4 := proc(a, b, c, d, nat, x)
+        # Assume b = -c, otherwise
+        # x \mapsto x + (b+c)/2;
+    local _a := a - (b+c)/2, _b := b - (b+c)/2;
+    local _c := c - (b+c)/2, _d := d - (b+c)/2;
+
+        # Compute certificates of g1 in QM(g1 g2 g3)
+    local g1_s0, g1_s1;
+        g1_s0, g1_s1 := lemma_3_1(_c, -_a, _d, x);
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1_s0 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1_s1 < 0], [x])));
+
+        # Compute certificates of g2 in QM(g1 g2 g3)
+    local g2_s0, g2_s1;
+        g2_s0, g2_s1 := lemma_3_2(_c, -_a, _d, x);
+
+    local output := zeroPO(nat);
+        #x := x - (b+c)/2;
+        #updateNatEntry(output, nat_gen, sos_multiplier);
+        return g1_s0, g1_s1;
+    end proc;
+
+    # TODO
+    case_3_5 := proc(a, b, c, nat, x)
+        return;
+    end proc;
+
+    # Assume 0 < a < b, 0 < a < c < d
+    cases := proc(a, b, c, d, nat, x)
+    local ok1, ok2;
+        ok1, ok2 := case_3_4(a, b, c, d, nat, x);
+        return ok1, ok2;
     end proc;
 end module;
