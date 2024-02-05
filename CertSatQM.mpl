@@ -22,7 +22,7 @@ CertSatQM := module() option package;
 local sqf;
 
 local auxiliarSosStep;
-export zeroPO, unitPO, updatePONatEntry, addPO, prodPO;
+export zeroPO, unitPO, updatePONatEntry, addPO, prodPO,  scalarProdPO;
 
 local semiAlgebraicIntervals;
 local ord, boundInfo;
@@ -56,9 +56,9 @@ export case_3_5;
 
 export cases;
 
-export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM;
+export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM, scalarProdQM;
 
-export  split_basis_PO;
+export  split_basis_PO, liftPO2QM;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -153,6 +153,16 @@ export  split_basis_PO;
                     output[_basis] + _sos*p1[_indices[i]]*p2[_indices[j]];
                 end if;
             end do;
+        end do;
+        return output;
+    end proc;
+
+    scalarProdPO := proc(p, sos, nat, x)
+    local i;
+    local output := zeroPO(nat);
+    local _indices := [indices(p1, 'nolist')];
+        for i from 1 to nops(_indices) do
+            output[_indices[i]] := sos*p[_indices[i]];
         end do;
         return output;
     end proc;
@@ -538,10 +548,10 @@ export  split_basis_PO;
         return output;
     end proc;
 
-    # Input: 
+    # Input:
     # p, q \in nat
     # Output:
-    # QMtable of p*q 
+    # QMtable of p*q
     cases := proc(p, q, a_0, b_k, nat, x)
     local output := zeroQM(nat);
     local roots_p := sort([solve(p=0,x)]);
@@ -584,21 +594,21 @@ export  split_basis_PO;
         end if;
 
         if num_roots_p = 2 and num_roots_q = 2 then
-          if subs(x=roots_p[2], q) = 0 then
-            #print(">> case_3_3 4 1");
-            return case_3_3(roots_p[1], roots_p[2], roots_q[2], nat, x);
-          end if;
-          if subs(x=roots_q[2], p) = 0 then
-            #print(">> case_3_3 4 2");
-            return case_3_3(roots_q[1], roots_q[2], roots_p[2], nat, x);
-          end if;
-          if evalb(roots_p[2] < roots_q[1]) then
-            #print(">> case_3_5 4 1");
-            return case_3_5(a_0, roots_p[1], roots_p[2], roots_q[1], roots_q[2], b_k, nat, x)
-          else
-            #print(">> case_3_5 4 2");
-            return case_3_5(a_0, roots_q[1], roots_q[2], roots_p[1], roots_p[2], b_k, nat, x)
-          end if;
+            if subs(x=roots_p[2], q) = 0 then
+                #print(">> case_3_3 4 1");
+                return case_3_3(roots_p[1], roots_p[2], roots_q[2], nat, x);
+            end if;
+            if subs(x=roots_q[2], p) = 0 then
+                #print(">> case_3_3 4 2");
+                return case_3_3(roots_q[1], roots_q[2], roots_p[2], nat, x);
+            end if;
+            if evalb(roots_p[2] < roots_q[1]) then
+                #print(">> case_3_5 4 1");
+                return case_3_5(a_0, roots_p[1], roots_p[2], roots_q[1], roots_q[2], b_k, nat, x)
+            else
+                #print(">> case_3_5 4 2");
+                return case_3_5(a_0, roots_q[1], roots_q[2], roots_p[1], roots_p[2], b_k, nat, x)
+            end if;
         end if;
 
         return false, false;
@@ -640,7 +650,7 @@ export  split_basis_PO;
     # Input:
     # q1, q2 \in QMtable
     # Output:
-    # QMtable of p*q 
+    # QMtable of p*q
     prodQM := proc(q1, q2, a_0, b_k, nat, x)
     local i, j;
     local output := zeroQM(nat), _temp, todo;
@@ -649,42 +659,52 @@ export  split_basis_PO;
     local _basis, basis_element;
         for i from 1 to size do
             if q1[_indices[i]] = 0 then
-              next;
+                next;
             end if;
             for j from 1 to size do
                 if q2[_indices[j]] = 0 then
-                  next;
+                    next;
                 end if;
                 if evalb(_indices[i] = _indices[j]) then
                     output[1] := output[1] + _indices[i]^2*q1[_indices[i]]*q2[_indices[j]];
                 else
                     if _indices[i] = 1 then
-                      output[_indices[j]] := q2[_indices[j]];
+                        output[_indices[j]] := q2[_indices[j]];
                     elif _indices[j] = 1 then
-                      output[_indices[i]] := q1[_indices[i]];
+                        output[_indices[i]] := q1[_indices[i]];
                     else
-                      # DEBUG
-                      #print(">> i", i);
-                      #print(">> j", j);
-                      #print(">> indices[i]", _indices[i]);
-                      #print(">> indices[j]", _indices[j]);
-                      #print(">> q1[indices[i]]", q1[_indices[i]]);
-                      #print(">> q2[indices[j]]", q2[_indices[j]]);
-                      _temp := cases(_indices[i], _indices[j], a_0, b_k, nat, x);
-                      #print(">> _temp @ prodQM", _temp);
-                      #print(">> _temp@prodQM", _temp);
-                      # Update
-                      todo := [indices(_temp, 'nolist')];
-                      #print(">> todo@prodQM", todo);
-                      for basis_element in todo do
-                        #print(">> basis_element", basis_element);
-                        #print(">> _temp[basis_element]", _temp[basis_element]);
-                        _temp[basis_element] := q1[_indices[i]]*q2[_indices[j]]*_temp[basis_element];
-                      end do;
-                      output := addQM(output, _temp, nat);
-                      end if;
+                        # DEBUG
+                        #print(">> i", i);
+                        #print(">> j", j);
+                        #print(">> indices[i]", _indices[i]);
+                        #print(">> indices[j]", _indices[j]);
+                        #print(">> q1[indices[i]]", q1[_indices[i]]);
+                        #print(">> q2[indices[j]]", q2[_indices[j]]);
+                        _temp := cases(_indices[i], _indices[j], a_0, b_k, nat, x);
+                        #print(">> _temp @ prodQM", _temp);
+                        #print(">> _temp@prodQM", _temp);
+                        # Update
+                        todo := [indices(_temp, 'nolist')];
+                        #print(">> todo@prodQM", todo);
+                        for basis_element in todo do
+                            #print(">> basis_element", basis_element);
+                            #print(">> _temp[basis_element]", _temp[basis_element]);
+                            _temp[basis_element] := q1[_indices[i]]*q2[_indices[j]]*_temp[basis_element];
+                        end do;
+                        output := addQM(output, _temp, nat);
                     end if;
+                end if;
             end do;
+        end do;
+        return output;
+    end proc;
+
+    scalarProdQM := proc(p, sos, nat, x)
+    local i;
+    local output := zeroQM(nat);
+    local _indices := [indices(p, 'nolist')];
+        for i from 1 to nops(_indices) do
+            output[_indices[i]] := sos*p[_indices[i]];
         end do;
         return output;
     end proc;
@@ -692,15 +712,45 @@ export  split_basis_PO;
     split_basis_PO := proc(basis_element, nat);
     local i, elem;
     local todo := map(
-            _index -> [expand(mul(elem, elem in map(i -> nat[i], _index))), _index],
-            powerset([seq(i, i=1..nops(nat))])
-                      );
+        _index -> [expand(mul(elem, elem in map(i -> nat[i], _index))), _index],
+        powerset([seq(i, i=1..nops(nat))])
+                     );
     local j := 1;
-    while true do
-      if evalb(expand(todo[j, 1] - basis_element) = 0) then 
-        return todo[j, 2];
-      end if;
-      j := j + 1;
-    end do;
+        while true do
+            if evalb(expand(todo[j, 1] - basis_element) = 0) then
+                return todo[j, 2];
+            end if;
+            j := j + 1;
+        end do;
     end proc;
+
+    liftPO2QM := proc(f, nat, a_0, b_k, x)
+        factorable_sos, certPO := inductiveCert(f, nat, x);
+    local output := zeroQM(nat), _temp1, _temp2;
+        print(">> factorable_sos", factorable_sos);
+        for basis in [indices(certPO, 'nolist')] do
+            if evalb(certPO[basis] = 0) = false then
+                _temp1 := unitQM(nat);
+                todo := split_basis_PO(basis, nat);
+                #print(">> todo @ lift2QM", todo);
+                for _todo in todo do
+                    _temp2 := zeroQM(nat);
+                    updateQMNatEntry(_temp2, nat[_todo], 1);
+                    #print(">> _temp2 @ lift2QM", _temp2);
+                    #print(">> before prodQM PO_2_QM[basis] @ lift2QM", PO_2_QM[basis]);
+                    _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
+                    #print(">> after prodQM PO_2_QM[basis] @ lift2QM", PO_2_QM[basis]);
+                end do;
+                _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
+                output := addQM(output, _temp1, nat);
+            end if;
+        end do;
+        #print(PO_2_QM);
+        #for basis in [indices(PO_2_QM, 'nolist')] do
+        #lprint(">> basis", basis);
+        #print(">> as a QM certificate", PO_2_QM[basis]);
+        #end do;
+        return output;
+    end proc;
+
 end module;
