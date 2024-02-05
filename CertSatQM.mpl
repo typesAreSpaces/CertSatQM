@@ -24,7 +24,7 @@ local sqf;
 local auxiliarSosStep;
 export zeroPO, unitPO, updatePONatEntry, addPO, prodPO,  scalarProdPO;
 
-local semiAlgebraicIntervals;
+export semiAlgebraicIntervals;
 local ord, boundInfo;
 local decompositionFromBasis;
 
@@ -33,7 +33,7 @@ local lemma_1_5;
 local natGens;
 
 local checkSosMultipliers;
-local checkCorrectness;
+local checkCorrectnessPO;
 
 export inductiveCert;
 
@@ -58,7 +58,7 @@ export cases;
 
 export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM, scalarProdQM;
 
-export  split_basis_PO, liftPO2QM;
+export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -330,7 +330,7 @@ export  split_basis_PO, liftPO2QM;
             end proc, sos_multipliers);
     end proc;
 
-    checkCorrectness := proc(po, sos_extra, f)
+    checkCorrectnessPO := proc(po, sos_extra, f)
     local basis_element := [indices(po, 'nolist')];
     local sos_multiplier := [entries(po, 'nolist')];
     local i, output := 0;
@@ -366,8 +366,8 @@ export  split_basis_PO, liftPO2QM;
         for i from 1 to nops(simpl_roots[1, 1]) do
             c1 := simpl_roots[1, 1, i];
             _temp := zeroPO(nat);
-            updatePONatEntry(_temp, 1, a - c1);
-            updatePONatEntry(_temp, x - a, 1);
+            updatePONatEntry(_temp,     1, a - c1);
+            updatePONatEntry(_temp, x - a,      1);
             output := prodPO(output, _temp, nat, x)
         end do;
 
@@ -385,8 +385,8 @@ export  split_basis_PO, liftPO2QM;
                 DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(SemiAlgebraic([(x-c1)*(x-c2)-_gamma*(x-a)*(x-b) < 0], [x])));
 
                 _temp := zeroPO(nat);
-                updatePONatEntry(_temp, 1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
-                updatePONatEntry(_temp, (x-a)*(x-b), _gamma);
+                updatePONatEntry(_temp,           1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
+                updatePONatEntry(_temp, (x-a)*(x-b),                             _gamma);
                 output := prodPO(output, _temp, nat, x);
 
                 j := j + 1;
@@ -399,8 +399,8 @@ export  split_basis_PO, liftPO2QM;
         for i from 1 to nops(simpl_roots[size, 1]) do
             c2 := simpl_roots[size, 1, i];
             _temp := zeroPO(nat);
-            updatePONatEntry(_temp, 1, c2 - b);
-            updatePONatEntry(_temp, -(x - b), 1);
+            updatePONatEntry(_temp,        1, c2 - b);
+            updatePONatEntry(_temp, -(x - b),      1);
             output := prodPO(output, _temp, nat, x)
         end do;
 
@@ -416,10 +416,10 @@ export  split_basis_PO, liftPO2QM;
     case_3_1 := proc(a, b, nat, x)
     local output := zeroQM(nat);
         if a = b then
-            updatePONatEntry(output, x - a, (x-a-1)^2/4);
+            updatePONatEntry(output,    x - a, (x-a-1)^2/4);
             updatePONatEntry(output, -(x - a), (x-a+1)^2/4);
         elif a < b then
-            updatePONatEntry(output, x - a, (x-b)^2/(b-a));
+            updatePONatEntry(output,    x - a, (x-b)^2/(b-a));
             updatePONatEntry(output, -(x - b), (x-a)^2/(b-a));
         else
             return case_3_1(b, a);
@@ -429,8 +429,8 @@ export  split_basis_PO, liftPO2QM;
 
     case_3_2 := proc(a, b, nat, x)
     local output := zeroQM(nat);
-        updatePONatEntry(output, (x-a), (x-b)^2);
-        updatePONatEntry(output, (x-a)*(x-b), (b-a));
+        updatePONatEntry(output,       (x-a), (x-b)^2);
+        updatePONatEntry(output, (x-a)*(x-b),   (b-a));
         return output;
     end proc;
 
@@ -438,7 +438,7 @@ export  split_basis_PO, liftPO2QM;
     local output := zeroQM(nat);
     local alpha := (b-a)/(c-b);
         updatePONatEntry(output, (x-a)*(x-b), alpha/(alpha+1)*(x-c)^2);
-        updatePONatEntry(output, (x-b)*(x-c), 1/(alpha+1)*(x-a)^2);
+        updatePONatEntry(output, (x-b)*(x-c),     1/(alpha+1)*(x-a)^2);
         return output;
     end proc;
 
@@ -528,10 +528,10 @@ export  split_basis_PO, liftPO2QM;
 
     local output := zeroQM(nat);
         #updateQMNatEntry(output, nat_gen, sos_multiplier);
-        updateQMNatEntry(output, 1, subs(x=x-(b+c)/2, sos_1));
-        updateQMNatEntry(output, (x-a), subs(x=x-(b+c)/2, sos_g1));
+        updateQMNatEntry(output,           1, subs(x=x-(b+c)/2, sos_1));
+        updateQMNatEntry(output,       (x-a), subs(x=x-(b+c)/2, sos_g1));
         updateQMNatEntry(output, (x-b)*(x-c), subs(x=x-(b+c)/2, sos_g2));
-        updateQMNatEntry(output, -(x-d), subs(x=x-(b+c)/2, sos_g3));
+        updateQMNatEntry(output,      -(x-d), subs(x=x-(b+c)/2, sos_g3));
 
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
         return output;
@@ -727,30 +727,34 @@ export  split_basis_PO, liftPO2QM;
     liftPO2QM := proc(f, nat, a_0, b_k, x)
         factorable_sos, certPO := inductiveCert(f, nat, x);
     local output := zeroQM(nat), _temp1, _temp2;
-        print(">> factorable_sos", factorable_sos);
+        #print(">> factorable_sos", factorable_sos);
         for basis in [indices(certPO, 'nolist')] do
             if evalb(certPO[basis] = 0) = false then
                 _temp1 := unitQM(nat);
-                todo := split_basis_PO(basis, nat);
-                #print(">> todo @ lift2QM", todo);
-                for _todo in todo do
+                for _basis in split_basis_PO(basis, nat) do
                     _temp2 := zeroQM(nat);
-                    updateQMNatEntry(_temp2, nat[_todo], 1);
-                    #print(">> _temp2 @ lift2QM", _temp2);
-                    #print(">> before prodQM PO_2_QM[basis] @ lift2QM", PO_2_QM[basis]);
+                    updateQMNatEntry(_temp2, nat[_basis], 1);
                     _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
-                    #print(">> after prodQM PO_2_QM[basis] @ lift2QM", PO_2_QM[basis]);
                 end do;
                 _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
                 output := addQM(output, _temp1, nat);
             end if;
         end do;
-        #print(PO_2_QM);
-        #for basis in [indices(PO_2_QM, 'nolist')] do
-        #lprint(">> basis", basis);
-        #print(">> as a QM certificate", PO_2_QM[basis]);
-        #end do;
+        if evalb(factorable_sos = 1) = false then
+            output := scalarProdQM(output, factorable_sos, nat, x);
+        end if;
         return output;
     end proc;
 
+    checkCorrectnessQM := proc(p, f);
+        return evalb(0
+                     = expand(f
+                              - add(y,
+                                    y in map(
+                                        proc(eq)
+                                        local ops := op(eq);
+                                            ops[1]*ops[2]
+                                        end proc,
+                                        [indices(p, 'pairs')]))));
+    end proc;
 end module;

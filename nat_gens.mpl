@@ -49,15 +49,23 @@ local size := nops(intervals);
 local i;
 local out := [];
 
-if size = 0 then 
-  return out;
-end if;
+    if size = 0 then
+        return out;
+    end if;
 
-out := [x - intervals[1][1]];
-for i from 1 to size - 1 do
-  out := [op(out), (x - intervals[i][2])*(x - intervals[i+1][1])];
-end do;
-out := [op(out), -(x - intervals[size][2])];
+    out := [x - intervals[1][1]];
+    for i from 1 to size - 1 do
+        out := [op(out), (x - intervals[i][2])*(x - intervals[i+1][1])];
+    end do;
+    out := [op(out), -(x - intervals[size][2])];
 
-return out;
+    return out;
+end proc;
+
+getArchimedeanPolynomial := proc(x, intervals)
+local max_point := max(
+    abs(intervals[1, 1]),
+    abs(intervals[nops(intervals), 2])
+                      );
+    return max_point^2 - x^2;
 end proc;

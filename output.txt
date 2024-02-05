@@ -38,15 +38,73 @@ Warning, (in BitSizePolSeq) `p` is implicitly declared local
 |multivsos/multivsos.mm:1008|
 Warning, (in BitSizeSeq) `c` is implicitly declared local
 |multivsos/multivsos.mm:1018|
-Warning, (in inductiveTest) `test` is implicitly declared local |test.mpl:30|
-Warning, (in testPO) `factorable_sos` is implicitly declared local |test.mpl:35|
-Warning, (in testPO) `certPO` is implicitly declared local |test.mpl:35|
-Warning, (in testPO) `basis` is implicitly declared local |test.mpl:38|
-                             ">> factorable_sos", 1
+">> Number of intervals", 2
+">> Basis", [x-1, (x-2)*(x-3), -x+4]
+">> Archimedean Poly", -x^2+16
+">> Number of intervals", 3
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), -x+6]
+">> Archimedean Poly", -x^2+36
+                           ">> Time CertSatQM", 0.451
 
-                           3         2
-                          x  + 25/2 x  + 46 x + 105/2
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.002
 
-                           3         2
-                          x  + 25/2 x  + 46 x + 105/2
+">> Number of intervals", 4
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), -x+8]
+">> Archimedean Poly", -x^2+64
+                           ">> Time CertSatQM", 2.497
 
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                           ">> Time CertSatQM", 2.497
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+">> Number of intervals", 5
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), 10-x]
+">> Archimedean Poly", -x^2+100
+                          ">> Time CertSatQM", 12.086
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 12.142
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 12.259
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+">> Number of intervals", 6
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), -x+12]
+">> Archimedean Poly", -x^2+144
