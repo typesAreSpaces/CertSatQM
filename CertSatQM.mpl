@@ -22,7 +22,7 @@ CertSatQM := module() option package;
 local sqf;
 
 local auxiliarSosStep;
-export zeroPO, unitPO, updateNatEntry, addPO, prodPO;
+export zeroPO, unitPO, updatePONatEntry, addPO, prodPO;
 
 local semiAlgebraicIntervals;
 local ord, boundInfo;
@@ -38,23 +38,27 @@ local checkCorrectness;
 export inductiveCert;
 
 # products of the form (x-a), -(x-b), a \leq b
-local case_3_1;
+export case_3_1;
 
 # products of the form (x-a), (x-a)(x-b), a < b
-local case_3_2;
+export case_3_2;
 
 # products of the form (x-a)(x-b), (x-b)(x-c), a < b < c
-local case_3_3;
+export case_3_3;
 
 local lemma_3_1;
 local lemma_3_2;
 # products of the form (x-a), (x-b)(x-c), a < b < c
-local case_3_4;
+export case_3_4;
 
 # products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
-local case_3_5;
+export case_3_5;
 
 export cases;
+
+export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM;
+
+export  split_basis_PO;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -117,7 +121,7 @@ export cases;
         return output;
     end proc;
 
-    updateNatEntry := proc(po, nat_i, new_element)
+    updatePONatEntry := proc(po, nat_i, new_element)
         po[expand(nat_i)] := new_element;
         return;
     end proc;
@@ -333,7 +337,7 @@ export cases;
     # Assumption: SemiAlgebraic(basis) is bounded and non-empty
     inductiveCert := proc(f, basis, x)
         if checkMembership(f, basis, x) = false then
-            return false;
+            return 0, 0;
         end if;
 
     local intervals := semiAlgebraicIntervals(basis, x);
@@ -352,8 +356,8 @@ export cases;
         for i from 1 to nops(simpl_roots[1, 1]) do
             c1 := simpl_roots[1, 1, i];
             _temp := zeroPO(nat);
-            updateNatEntry(_temp, 1, a - c1);
-            updateNatEntry(_temp, x - a, 1);
+            updatePONatEntry(_temp, 1, a - c1);
+            updatePONatEntry(_temp, x - a, 1);
             output := prodPO(output, _temp, nat, x)
         end do;
 
@@ -371,8 +375,8 @@ export cases;
                 DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(SemiAlgebraic([(x-c1)*(x-c2)-_gamma*(x-a)*(x-b) < 0], [x])));
 
                 _temp := zeroPO(nat);
-                updateNatEntry(_temp, 1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
-                updateNatEntry(_temp, (x-a)*(x-b), _gamma);
+                updatePONatEntry(_temp, 1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
+                updatePONatEntry(_temp, (x-a)*(x-b), _gamma);
                 output := prodPO(output, _temp, nat, x);
 
                 j := j + 1;
@@ -385,8 +389,8 @@ export cases;
         for i from 1 to nops(simpl_roots[size, 1]) do
             c2 := simpl_roots[size, 1, i];
             _temp := zeroPO(nat);
-            updateNatEntry(_temp, 1, c2 - b);
-            updateNatEntry(_temp, -(x - b), 1);
+            updatePONatEntry(_temp, 1, c2 - b);
+            updatePONatEntry(_temp, -(x - b), 1);
             output := prodPO(output, _temp, nat, x)
         end do;
 
@@ -400,13 +404,13 @@ export cases;
     end proc;
 
     case_3_1 := proc(a, b, nat, x)
-    local output := zeroPO(nat);
+    local output := zeroQM(nat);
         if a = b then
-            updateNatEntry(output, x - a, (x-a-1)^2/4);
-            updateNatEntry(output, -(x - a), (x-a+1)^2/4);
+            updatePONatEntry(output, x - a, (x-a-1)^2/4);
+            updatePONatEntry(output, -(x - a), (x-a+1)^2/4);
         elif a < b then
-            updateNatEntry(output, x - a, (x-b)^2/(b-a));
-            updateNatEntry(output, -(x - b), (x-a)^2/(b-a));
+            updatePONatEntry(output, x - a, (x-b)^2/(b-a));
+            updatePONatEntry(output, -(x - b), (x-a)^2/(b-a));
         else
             return case_3_1(b, a);
         end if;
@@ -414,17 +418,17 @@ export cases;
     end proc;
 
     case_3_2 := proc(a, b, nat, x)
-    local output := zeroPO(nat);
-        updateNatEntry(output, (x-a), (x-b)^2);
-        updateNatEntry(output, (x-a)*(x-b), (b-a));
+    local output := zeroQM(nat);
+        updatePONatEntry(output, (x-a), (x-b)^2);
+        updatePONatEntry(output, (x-a)*(x-b), (b-a));
         return output;
     end proc;
 
     case_3_3 := proc(a, b, c, nat, x)
-    local output := zeroPO(nat);
+    local output := zeroQM(nat);
     local alpha := (b-a)/(c-b);
-        updateNatEntry(output, (x-a)*(x-b), alpha/(alpha+1)*(x-c)^2);
-        updateNatEntry(output, (x-b)*(x-b), 1/(alpha+1)*(x-a)^2);
+        updatePONatEntry(output, (x-a)*(x-b), alpha/(alpha+1)*(x-c)^2);
+        updatePONatEntry(output, (x-b)*(x-c), 1/(alpha+1)*(x-a)^2);
         return output;
     end proc;
 
@@ -477,14 +481,6 @@ export cases;
         # x \mapsto x + (b+c)/2;
     local _a := a - (b+c)/2, _b := b - (b+c)/2;
     local _c := c - (b+c)/2, _d := d - (b+c)/2;
-        #print(">> a", a);
-        #print(">> b", b);
-        #print(">> c", c);
-        #print(">> d", d);
-        #print(">> _a", _a);
-        #print(">> _b", _b);
-        #print(">> _c", _c);
-        #print(">> _d", _d);
 
         # Compute certificates of g1 in QM(g1 g2 g3)
     local g1__1, g1__g1g2g3;
@@ -520,26 +516,191 @@ export cases;
 
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c) - (sos_1 + sos_g1*(x-_a) + sos_g2*(x-_b)*(x-_c) + sos_g3*(-(x-_d))))));
 
-    local output := zeroPO(nat);
-        #updateNatEntry(output, nat_gen, sos_multiplier);
-        updateNatEntry(output, 1, subs(x=x-(b+c)/2, sos_1));
-        updateNatEntry(output, (x-a), subs(x=x-(b+c)/2, sos_g1));
-        updateNatEntry(output, (x-b)*(x-c), subs(x=x-(b+c)/2, sos_g2));
-        updateNatEntry(output, -(x-d), subs(x=x-(b+c)/2, sos_g3));
+    local output := zeroQM(nat);
+        #updateQMNatEntry(output, nat_gen, sos_multiplier);
+        updateQMNatEntry(output, 1, subs(x=x-(b+c)/2, sos_1));
+        updateQMNatEntry(output, (x-a), subs(x=x-(b+c)/2, sos_g1));
+        updateQMNatEntry(output, (x-b)*(x-c), subs(x=x-(b+c)/2, sos_g2));
+        updateQMNatEntry(output, -(x-d), subs(x=x-(b+c)/2, sos_g3));
 
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
         return output;
     end proc;
 
     # TODO
-    case_3_5 := proc(a, b, c, nat, x)
+    case_3_5 := proc(e, a, b, c, f, nat, x)
+    local _e := e - (b+c)/2, _a := a - (b+c)/2;
+    local _b := b - (b+c)/2, _c := c - (b+c)/2;
+    local _f := f - (b+c)/2;
+
+    local output := zeroQM(nat);
+        #updateQMNatEntry(output, nat_gen, sos_multiplier);
+        return output;
+    end proc;
+
+    # Input: 
+    # p, q \in nat
+    # Output:
+    # QMtable of p*q 
+    cases := proc(p, q, a_0, b_k, nat, x)
+    local output := zeroQM(nat);
+    local roots_p := sort([solve(p=0,x)]);
+    local roots_q := sort([solve(q=0,x)]);
+    local num_roots_p := nops(roots_p);
+    local num_roots_q := nops(roots_q);
+        #print(">> p", p);
+        #print(">> q", q);
+        #print(">> roots p", roots_p);
+        #print(">> roots q", roots_q);
+
+        if num_roots_p = num_roots_q and num_roots_p = 1 then
+            if lcoeff(p) = lcoeff(q) then
+                updateQMNatEntry(output, 1, p^2);
+                return output;
+            else
+                #print(">> case_3_1 1");
+                return case_3_1(roots_p[1], roots_q[1], nat, x);
+            end if;
+        end if;
+
+        if num_roots_p = 1 and num_roots_q = 2 and roots_q[1] < roots_q[2] then
+            if subs(x=roots_p[1], q) = 0 then
+                #print(">> case_3_2 2");
+                return case_3_2(roots_q[1], roots_q[2], nat, x);
+            else
+                #print(">> case_3_4 2");
+                return case_3_4(roots_p[1], roots_q[1], roots_q[2], b_k, nat, x);
+            end if
+        end if;
+
+        if num_roots_q = 1 and num_roots_p = 2 and roots_p[1] < roots_p[2] then
+            if subs(x=roots_q[1], p) = 0 then
+                #print(">> case_3_2 3");
+                return case_3_2(roots_p[1], roots_p[2], nat, x);
+            else
+                #print(">> case_3_4 3");
+                return case_3_4(roots_q[1], roots_p[1], roots_p[2], b_k, nat, x);
+            end if
+        end if;
+
+        if num_roots_p = 2 and num_roots_q = 2 then
+          if subs(x=roots_p[2], q) = 0 then
+            #print(">> case_3_3 4 1");
+            return case_3_3(roots_p[1], roots_p[2], roots_q[2], nat, x);
+          end if;
+          if subs(x=roots_q[2], p) = 0 then
+            #print(">> case_3_3 4 2");
+            return case_3_3(roots_q[1], roots_q[2], roots_p[2], nat, x);
+          end if;
+          if evalb(roots_p[2] < roots_q[1]) then
+            #print(">> case_3_5 4 1");
+            return case_3_5(a_0, roots_p[1], roots_p[2], roots_q[1], roots_q[2], b_k, nat, x)
+          else
+            #print(">> case_3_5 4 2");
+            return case_3_5(a_0, roots_q[1], roots_q[2], roots_p[1], roots_p[2], b_k, nat, x)
+          end if;
+        end if;
+
+        return false, false;
+    end proc;
+
+    # We implement the vector-like data structure
+    # using the `table` data structure
+    zeroQM := proc(nat)
+    local elem, i;
+    local basisQM, _zerosQM, _qm, qm;
+        basisQM := [1, op(map(expand, nat))];
+        _zerosQM := [seq(0, i=0..nops(nat))];
+        _qm := zip(`=`, basisQM, _zerosQM);
+        qm := table(_qm);
+        return qm;
+    end proc;
+
+    unitQM := proc(nat)
+    local output := zeroQM(nat);
+        output[1] := 1;
+        return output;
+    end proc;
+
+    updateQMNatEntry := proc(qm, nat_i, new_element)
+        qm[expand(nat_i)] := new_element;
         return;
     end proc;
 
-    # Assume 0 < a < b, 0 < a < c < d
-    cases := proc(a, b, c, d, nat, x)
-    local p;
-        p := case_3_4(a, b, c, d, nat, x);
-        return p;
+    addQM := proc(q1, q2, nat)
+    local i;
+    local output := zeroQM(nat);
+    local _indices := [indices(q1, 'nolist')];
+        for i from 1 to nops(_indices) do
+            output[_indices[i]] := q1[_indices[i]] + q2[_indices[i]];
+        end do;
+        return output;
+    end proc;
+
+    # Input:
+    # q1, q2 \in QMtable
+    # Output:
+    # QMtable of p*q 
+    prodQM := proc(q1, q2, a_0, b_k, nat, x)
+    local i, j;
+    local output := zeroQM(nat), _temp, todo;
+    local _indices := [indices(q1, 'nolist')];
+    local size := nops(_indices);
+    local _basis, basis_element;
+        for i from 1 to size do
+            if q1[_indices[i]] = 0 then
+              next;
+            end if;
+            for j from 1 to size do
+                if q2[_indices[j]] = 0 then
+                  next;
+                end if;
+                if evalb(_indices[i] = _indices[j]) then
+                    output[1] := output[1] + _indices[i]^2*q1[_indices[i]]*q2[_indices[j]];
+                else
+                    if _indices[i] = 1 then
+                      output[_indices[j]] := q2[_indices[j]];
+                    elif _indices[j] = 1 then
+                      output[_indices[i]] := q1[_indices[i]];
+                    else
+                      # DEBUG
+                      #print(">> i", i);
+                      #print(">> j", j);
+                      #print(">> indices[i]", _indices[i]);
+                      #print(">> indices[j]", _indices[j]);
+                      #print(">> q1[indices[i]]", q1[_indices[i]]);
+                      #print(">> q2[indices[j]]", q2[_indices[j]]);
+                      _temp := cases(_indices[i], _indices[j], a_0, b_k, nat, x);
+                      #print(">> _temp @ prodQM", _temp);
+                      #print(">> _temp@prodQM", _temp);
+                      # Update
+                      todo := [indices(_temp, 'nolist')];
+                      #print(">> todo@prodQM", todo);
+                      for basis_element in todo do
+                        #print(">> basis_element", basis_element);
+                        #print(">> _temp[basis_element]", _temp[basis_element]);
+                        _temp[basis_element] := q1[_indices[i]]*q2[_indices[j]]*_temp[basis_element];
+                      end do;
+                      output := addQM(output, _temp, nat);
+                      end if;
+                    end if;
+            end do;
+        end do;
+        return output;
+    end proc;
+
+    split_basis_PO := proc(basis_element, nat);
+    local i, elem;
+    local todo := map(
+            _index -> [expand(mul(elem, elem in map(i -> nat[i], _index))), _index],
+            powerset([seq(i, i=1..nops(nat))])
+                      );
+    local j := 1;
+    while true do
+      if evalb(expand(todo[j, 1] - basis_element) = 0) then 
+        return todo[j, 2];
+      end if;
+      j := j + 1;
+    end do;
     end proc;
 end module;
