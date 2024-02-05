@@ -143,7 +143,13 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local size := nops(_indices);
     local _sos, _basis;
         for i from 1 to size do
+            if p1[_indices[i]] = 0 then
+                next;
+            end if;
             for j from 1 to size do
+                if p2[_indices[j]] = 0 then
+                    next;
+                end if;
                 if evalb(_indices[i] = _indices[j]) then
                     output[1] := output[1] + _indices[i]^2*p1[_indices[i]]*p2[_indices[j]];
                 else
