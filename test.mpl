@@ -1,3 +1,5 @@
+restart;
+
 with(CertSatQM):
 
 printlevel := -1;
@@ -33,7 +35,7 @@ local gen, nat, nat_S, f, _roots;
 local qmCert;
 local st;
 
-for i from 4 to 18 by 2 do
+for i from 4 to 10 by 2 do
   lprint(">> Number of intervals", i/2);
 
   gen := -mul(y, y in map(_i -> (x-_i), [seq(j, j=1 .. i)]));
