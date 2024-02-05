@@ -1,0 +1,235 @@
+">> Number of intervals", 2
+">> Basis", [x-1, (x-2)*(x-3), -x+4]
+">> Archimedean Poly", -x^2+16
+">> Number of intervals", 3
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), -x+6]
+">> Archimedean Poly", -x^2+36
+                           ">> Time CertSatQM", 0.451
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.002
+
+">> Number of intervals", 4
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), -x+8]
+">> Archimedean Poly", -x^2+64
+                           ">> Time CertSatQM", 2.497
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                           ">> Time CertSatQM", 2.497
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+">> Number of intervals", 5
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), 10-x]
+">> Archimedean Poly", -x^2+100
+                          ">> Time CertSatQM", 12.086
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 12.142
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 12.259
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+">> Number of intervals", 6
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), -x+12]
+">> Archimedean Poly", -x^2+144
+                          ">> Time CertSatQM", 58.266
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 58.156
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                          ">> Time CertSatQM", 58.248
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                          ">> Time CertSatQM", 58.558
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+">> Number of intervals", 7
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), -x+14]
+">> Archimedean Poly", -x^2+196
+                          ">> Time CertSatQM", 269.360
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 269.005
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                          ">> Time CertSatQM", 268.249
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                          ">> Time CertSatQM", 267.482
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                          ">> Time CertSatQM", 267.637
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+">> Number of intervals", 8
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), (x-14)*(x-15), -x+16]
+">> Archimedean Poly", -x^2+256
+                         ">> Time CertSatQM", 1235.841
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                         ">> Time CertSatQM", 1249.041
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                         ">> Time CertSatQM", 1260.037
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+                         ">> Time CertSatQM", 1330.164
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                         ">> Time CertSatQM", 1326.789
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                         ">> Time CertSatQM", 1332.442
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                       ">> Time RealCertify fails", 0.001
+
+">> Number of intervals", 9
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), (x-14)*(x-15), (x-16)*(x-17), -x+18]
+">> Archimedean Poly", -x^2+324
+                         ">> Time CertSatQM", 6027.159
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
+                         ">> Time CertSatQM", 5993.735
+
+[x]
+Polynomial system with 1 variables and degree at most 4
+Size of monomial basis = 3
+Number of moment variables = 5
+SDPA starts...
+                        ">> Time RealCertify fails", 0.
+
