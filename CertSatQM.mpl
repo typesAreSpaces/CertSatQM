@@ -1,4 +1,5 @@
 $define ENABLE_DEBUGGING false
+$define ENABLE_TIMING    true
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
 
@@ -725,7 +726,14 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
     end proc;
 
     liftPO2QM := proc(f, nat, a_0, b_k, x)
+    local st;
+        if ENABLE_TIMING then
+            st := time();
+        end if;
         factorable_sos, certPO := inductiveCert(f, nat, x);
+        if ENABLE_TIMING then
+            print(">> Time inductiveCert", time() - st);
+        end if;
     local output := zeroQM(nat), _temp1, _temp2;
         #print(">> factorable_sos", factorable_sos);
         for basis in [indices(certPO, 'nolist')] do
@@ -734,7 +742,14 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
                 for _basis in split_basis_PO(basis, nat) do
                     _temp2 := zeroQM(nat);
                     updateQMNatEntry(_temp2, nat[_basis], 1);
+                    st := time();
+                    if ENABLE_TIMING then
+                        st := time();
+                    end if;
                     _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
+                    if ENABLE_TIMING then
+                        print(">> Time prodQM", time() - st);
+                    end if;
                 end do;
                 _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
                 output := addQM(output, _temp1, nat);
