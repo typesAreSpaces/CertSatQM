@@ -1,0 +1,67 @@
+">> Number of intervals", 2
+">> Basis", [x-1, (x-2)*(x-3), -x+4]
+">> Number of intervals", 3
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), -x+6]
+">> f", (x-1)*(x-2)*(x-3)
+                           ">> Time CertSatQM", 0.452
+
+">> Number of intervals", 4
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), -x+8]
+">> f", (x-1)*(x-2)*(x-3)
+                           ">> Time CertSatQM", 2.507
+
+">> f", (x-1)*(x-4)*(x-5)
+                           ">> Time CertSatQM", 2.386
+
+">> Number of intervals", 5
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), 10-x]
+">> f", (x-1)*(x-2)*(x-3)
+                          ">> Time CertSatQM", 12.369
+
+">> f", (x-1)*(x-4)*(x-5)
+                          ">> Time CertSatQM", 12.308
+
+">> f", (x-1)*(x-6)*(x-7)
+                          ">> Time CertSatQM", 12.308
+
+">> Number of intervals", 6
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), -x+12]
+">> f", (x-1)*(x-2)*(x-3)
+                          ">> Time CertSatQM", 60.103
+
+">> f", (x-1)*(x-4)*(x-5)
+                          ">> Time CertSatQM", 60.571
+
+">> f", (x-1)*(x-6)*(x-7)
+                          ">> Time CertSatQM", 60.005
+
+">> f", (x-1)*(x-8)*(x-9)
+                          ">> Time CertSatQM", 59.219
+
+">> Number of intervals", 7
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), -x+14]
+">> f", (x-1)*(x-2)*(x-3)
+                          ">> Time CertSatQM", 288.457
+
+">> f", (x-1)*(x-4)*(x-5)
+                          ">> Time CertSatQM", 288.521
+
+">> f", (x-1)*(x-6)*(x-7)
+                          ">> Time CertSatQM", 282.330
+
+">> f", (x-1)*(x-8)*(x-9)
+                          ">> Time CertSatQM", 274.453
+
+">> f", (x-11)*(x-1)*(x-10)
+                          ">> Time CertSatQM", 275.838
+
+">> Number of intervals", 8
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), (x-14)*(x-15), -x+16]
+">> f", (x-1)*(x-2)*(x-3)
+                         ">> Time CertSatQM", 1260.443
+
+">> f", (x-1)*(x-4)*(x-5)
+Interrupted

@@ -1,0 +1,75 @@
+">> Number of intervals", 2
+">> Basis", [x-1, (x-2)*(x-3), -x+4]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 16
+
+                             ">> Is correct?", true
+
+                           ">> Time CertSatQM", 0.089
+
+">> Number of intervals", 3
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), -x+6]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 36
+
+                             ">> Is correct?", true
+
+                           ">> Time CertSatQM", 0.411
+
+">> Number of intervals", 4
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), -x+8]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 64
+
+                             ">> Is correct?", true
+
+                           ">> Time CertSatQM", 2.293
+
+">> Number of intervals", 5
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), 10-x]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 100
+
+                             ">> Is correct?", true
+
+                          ">> Time CertSatQM", 11.926
+
+">> Number of intervals", 6
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), -x+12]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 144
+
+                             ">> Is correct?", true
+
+                          ">> Time CertSatQM", 56.669
+
+">> Number of intervals", 7
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), -x+14]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 196
+
+                             ">> Is correct?", true
+
+                          ">> Time CertSatQM", 262.091
+
+">> Number of intervals", 8
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), (x-14)*(x-15), -x+16]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 256
+
+                             ">> Is correct?", true
+
+                         ">> Time CertSatQM", 1207.187
+
+">> Number of intervals", 9
+">> Basis", [x-1, (x-2)*(x-3), (x-4)*(x-5), (x-6)*(x-7), (x-8)*(x-9), (x-10)*(x
+-11), (x-12)*(x-13), (x-14)*(x-15), (x-16)*(x-17), -x+18]
+                                                    2
+                     ">> Archimedean polynomial", -x  + 324
+
+                             ">> Is correct?", true
+
+                         ">> Time CertSatQM", 5683.894
