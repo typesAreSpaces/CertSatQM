@@ -54,5 +54,6 @@ print(">> Result", qmCert);
 print(">> Is correct?", checkCorrectnessQM(qmCert, f));
 end proc;
 
-test();
+#test();
 #test2();
+print("Hello");

@@ -2,8 +2,8 @@ QUIET_MODE=
 QUIET_MODE=-q
 
 QUIET_MODE=-q
-PROJECT_NAME=CertSatQM
-OUTPUT=data/output.txt
+PROJECT_NAME=./../CertSatQM
+OUTPUT=../data/output.txt
 TEST_FILE=test_CertSatQM_only.mpl
 
 all : $(PROJECT_NAME).mla
