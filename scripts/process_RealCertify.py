@@ -15,8 +15,8 @@ def average(l):
 
 outLine = re.compile('.*>>.*')
 
-#file = open('output_RealCertify_algo_1.txt', 'r')
-file = open('output_RealCertify_algo_2.txt', 'r')
+#file = open('./../data/output_RealCertify_algo_1.txt', 'r')
+file = open('./../data/output_RealCertify_algo_2.txt', 'r')
 
 table = {}
 times = []

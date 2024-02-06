@@ -15,7 +15,7 @@ def average(l):
 
 outLine = re.compile('.*>>.*')
 
-file = open('output_CertSatQM_endpoints.txt', 'r')
+file = open('../data/output_CertSatQM_endpoints.txt', 'r')
 
 table = {}
 times = []
