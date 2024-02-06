@@ -1,5 +1,5 @@
 $define ENABLE_DEBUGGING false
-$define ENABLE_TIMING    true
+$define ENABLE_TIMING    false
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
 
@@ -408,8 +408,9 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
         #
         # Verify output
         #
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, checkSosMultipliers(output));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Check correctness (difference should be zero):", checkCorrectness(output, factorable_sos, f)));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Check correctness (difference should be zero):", checkCorrectnessPO(output, factorable_sos, f)));
 
         return factorable_sos, output;
     end proc;
@@ -738,8 +739,10 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
         #print(">> factorable_sos", factorable_sos);
         for basis in [indices(certPO, 'nolist')] do
             if evalb(certPO[basis] = 0) = false then
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> basis@liftPO2QM", basis));
                 _temp1 := unitQM(nat);
                 for _basis in split_basis_PO(basis, nat) do
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _basis@liftPO2QM", nat[_basis]));
                     _temp2 := zeroQM(nat);
                     updateQMNatEntry(_temp2, nat[_basis], 1);
                     st := time();
@@ -753,6 +756,7 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
                 end do;
                 _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
                 output := addQM(output, _temp1, nat);
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(" "));
             end if;
         end do;
         if evalb(factorable_sos = 1) = false then
