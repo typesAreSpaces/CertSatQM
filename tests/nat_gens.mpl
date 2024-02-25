@@ -66,6 +66,6 @@ getArchimedeanPolynomial := proc(x, intervals)
 local max_point := max(
     abs(intervals[1, 1]),
     abs(intervals[nops(intervals), 2])
-                           );
+                      );
     return max_point^2 - x^2;
 end proc;

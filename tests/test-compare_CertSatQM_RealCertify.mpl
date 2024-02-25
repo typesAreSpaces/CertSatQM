@@ -44,7 +44,9 @@ for i from 4 to 20 by 2 do
 
     for j from 2 to i/2 - 1 do
         _roots := solve(nat[j]=0,x);
-        f := (x - a_0 + 1)*(x - (_roots[1] + (_roots[2]-_roots[1])/3))*(x - (_roots[1]+2*(_roots[2]-_roots[1])/3));
+        f := (x - a_0 + 1)
+        *(x - (_roots[1] + (_roots[2]-_roots[1])/3))
+        *(x - (_roots[1]+2*(_roots[2]-_roots[1])/3));
         lprint(">> f", f);
 
         st := time();
@@ -64,4 +66,4 @@ for i from 4 to 20 by 2 do
     end do;
 end do;
 
-#testRealCertify((x+7)*(x+3)*(x+5/2), [x+6, (x+4)*(x+2), x*(x-2), -(x-4), 100-x^2]);
+testRealCertify((x+7)*(x+3)*(x+5/2), [x+6, (x+4)*(x+2), x*(x-2), -(x-4), 100-x^2]);
