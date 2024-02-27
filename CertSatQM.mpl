@@ -591,22 +591,24 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     local n_curr := 0, min_b_c, min_outside;
         while true do
-            sols := select(point -> evalf(point) < -a or evalf(point) > c, 
-              [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)]);
-            min_outside := min(map(x_arg -> evalf(subs({n=n_curr, x=x_arg}, p)), sols));
+            sols := select(point -> evalf(point) < -b or evalf(point) > -c,
+                           [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)]);
+            #min_outside := min(map(x_arg -> evalf(subs({n=n_curr, x=x_arg}, p)), sols));
+            min_outside := min(map(x_arg -> evala(subs({n=n_curr, x=x_arg}, p)), sols));
             min_b_c := subs({n=n_curr, x=-b}, p);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_outside", min_outside));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_b_c", evalf(min_b_c)));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> p", subs({n=n_curr}, p)));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> pDeriv", subs({n=n_curr}, pDeriv)));
-            if evalf(min_b_c) < evalf(min_outside) then
+            #if evalf(min_b_c) < evalf(min_outside) then
+            if is(min_b_c < simplify(min_outside)) then
                 break;
             end if;
             n_curr := n_curr + 1;
         end do;
 
         s := subs(n=n_curr, s);
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
     local alpha := -1/(subs({n=n_curr, x=-b}, p));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> alpha", evalf(alpha)));
     local s1 := alpha*s_A*s;
