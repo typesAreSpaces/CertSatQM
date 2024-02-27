@@ -582,7 +582,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local s_A := lemma_3_4_compute_A(a, b, c, d, e, x);
 
     local s := (x - _alpha)^(2*n)*(x - _beta)^(2*n);
-    local p := s_A*s*g1*g3*g4;
+    local p := -s_A*s*g1*g3*g4;
     local pDeriv:= -2*n*((x - _beta) + (x - _alpha))*g1*g3*g4
         - (x-_alpha)*(x-_beta)*(g3*g4 + g1*(x-d)*g4 + g1*(x-c)*g4 - g1*g3);
         if not(s_A = 1) then
@@ -591,11 +591,14 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     local n_curr := 0, min_b_c, min_outside;
         while true do
-            sols := [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)];
+            sols := select(point -> evalf(point) < -a or evalf(point) > c, 
+              [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)]);
             min_outside := min(map(x_arg -> evalf(subs({n=n_curr, x=x_arg}, p)), sols));
-            min_b_c := -subs({n=n_curr, x=-b}, p);
+            min_b_c := subs({n=n_curr, x=-b}, p);
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_outside", min_outside));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_b_c", evalf(min_b_c)));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> p", subs({n=n_curr}, p)));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> pDeriv", subs({n=n_curr}, pDeriv)));
             if evalf(min_b_c) < evalf(min_outside) then
                 break;
             end if;
@@ -604,9 +607,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
         s := subs(n=n_curr, s);
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
-    local alpha := 1/(subs({n=n_curr, x=-b}, p));
+    local alpha := -1/(subs({n=n_curr, x=-b}, p));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> alpha", evalf(alpha)));
-    local s1 := alpha*s*s_A;
+    local s1 := alpha*s_A*s;
     local s0 := g2*(1- s1*g1*g3*g4);
 
         return s0, s1;
