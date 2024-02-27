@@ -52,6 +52,9 @@ local lemma_3_2;
 # products of the form (x-a), (x-b)(x-c), a < b < c
 export case_3_4;
 
+# TODO change to local
+local lemma_3_4_compute_A;
+export lemma_3_4;
 # products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
 export case_3_5;
 
@@ -59,7 +62,7 @@ export cases;
 
 export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM, scalarProdQM;
 
-export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
+export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -459,7 +462,7 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
             sols := [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)];
             min_a_c := min(map(x_arg -> subs({n=n_curr,x=evalf(x_arg)}, p), sols));
             min_b := subs({n=n_curr,x=-b}, p);
-            if min_b < min_a_c then
+            if min_b <= min_a_c then
                 break;
             end if;
             n_curr := n_curr + 1;
@@ -537,6 +540,76 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
         return output;
+    end proc;
+
+    # Returns solution for parameter A in (x-A)^2 g1 g3 g4
+    lemma_3_4_compute_A := proc(a, b, c, d, e, x)
+        # The following returns 1 if g1 g3 g4|_{x = -b} = g1 g3 g4|_{x = -c}
+    local gamma0 := (a-b)*(b+c)*(b+d)*(b+e);
+    local gamma1 := 2*(a-c)*c*(c+d)*(c+e);
+        if gamma0 = gamma1 then
+            return 1;
+        end if;
+
+    local _a := (gamma0 - gamma1);
+    local _b := 2*(gamma0*b - gamma1*c);
+    local _c := (gamma0*b^2 - gamma1*c^2);
+    local A := (-_b - sqrt(_b^2 - 4*_a*_c))/(2*_a);
+        return (x-A)^2;
+    end proc;
+
+    # Assume 0 < c < b < a
+    # Assume 0 < c < d < e
+    lemma_3_4 := proc(a, b, c, d, e, x)
+    local g1 := (x+a), g2 := (x+b)*(x+c), g3 := (x-c)*(x-d), g4 := -(x-e);
+    local _alpha, _beta;
+        # Case 1: e + (b+c)/2 = a - (b+c)/2
+        if e + b + c = a then
+            _alpha := -a;
+            _beta := e;
+        end if;
+        # Case 2: e + (b+c)/2 > a - (b+c)/2
+        if e + b + c > a then
+            _alpha := -(e + b + c);
+            _beta := e;
+        end if;
+        # Case 3: e + (b+c)/2 < a - (b+c)/2
+        if e + b + c < a then
+            _alpha := -a;
+            _beta := a - b - c;
+        end if;
+
+    local s_A := lemma_3_4_compute_A(a, b, c, d, e, x);
+
+    local s := (x - _alpha)^(2*n)*(x - _beta)^(2*n);
+    local p := s_A*s*g1*g3*g4;
+    local pDeriv:= -2*n*((x - _beta) + (x - _alpha))*g1*g3*g4
+        - (x-_alpha)*(x-_beta)*(g3*g4 + g1*(x-d)*g4 + g1*(x-c)*g4 - g1*g3);
+        if not(s_A = 1) then
+            pDeriv:= diff(s_A, x)/2*pDeriv - 2*(x-_alpha)*(x-_beta)*g1*g3*g4;
+        end if;
+
+    local n_curr := 0, min_b_c, min_outside;
+        while true do
+            sols := [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)];
+            min_outside := min(map(x_arg -> evalf(subs({n=n_curr, x=x_arg}, p)), sols));
+            min_b_c := -subs({n=n_curr, x=-b}, p);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_outside", min_outside));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_b_c", evalf(min_b_c)));
+            if evalf(min_b_c) < evalf(min_outside) then
+                break;
+            end if;
+            n_curr := n_curr + 1;
+        end do;
+
+        s := subs(n=n_curr, s);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
+    local alpha := 1/(subs({n=n_curr, x=-b}, p));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> alpha", evalf(alpha)));
+    local s1 := alpha*s*s_A;
+    local s0 := g2*(1- s1*g1*g3*g4);
+
+        return s0, s1;
     end proc;
 
     # TODO
@@ -727,6 +800,7 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
     end proc;
 
     liftPO2QM := proc(f, nat, a_0, b_k, x)
+    local factorable_sos, certPO, basis, _basis;
     local st;
         if ENABLE_TIMING then
             st := time();
@@ -766,6 +840,7 @@ export  split_basis_PO, liftPO2QM, checkCorrectnessQM;
     end proc;
 
     checkCorrectnessQM := proc(p, f);
+    local y;
         return evalb(0
                      = expand(f
                               - add(y,
