@@ -52,9 +52,8 @@ local lemma_3_2;
 # products of the form (x-a), (x-b)(x-c), a < b < c
 export case_3_4;
 
-# TODO change to local
 local lemma_3_4_compute_A;
-export lemma_3_4;
+local lemma_3_4;
 # products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
 export case_3_5;
 
