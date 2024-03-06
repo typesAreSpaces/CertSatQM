@@ -1,8 +1,11 @@
+PROJECT_NAME=CertSatQM
+TEST_FILE=test.mpl
+OUTPUT=data/output.txt
+
+QUIET_MODE=
 QUIET_MODE=-q
 
-PROJECT_NAME=CertSatQM
-TEST_FILE=current_test.mpl
-OUTPUT=data/output.txt
+QUIET_MODE=
 
 .PHONY: clean all
 

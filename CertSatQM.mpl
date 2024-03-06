@@ -1,5 +1,6 @@
-$define ENABLE_DEBUGGING false
-$define ENABLE_TIMING    false
+$define ENABLE_VERIFICATION false
+$define ENABLE_DEBUGGING    true
+$define ENABLE_TIMING       false
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
 
@@ -23,7 +24,8 @@ CertSatQM := module() option package;
 local sqf;
 
 local auxiliarSosStep;
-export zeroPO, unitPO, updatePONatEntry, addPO, prodPO,  scalarProdPO;
+export zeroPO, unitPO, updatePONatEntry;
+export addPO, prodPO,  scalarProdPO;
 
 export semiAlgebraicIntervals;
 local ord, boundInfo;
@@ -59,8 +61,10 @@ export case_3_5;
 
 export cases;
 
-export zeroQM, unitQM, updateQMNatEntry, addQM, prodQM, scalarProdQM;
+export zeroQM, unitQM, updateQMNatEntry;
+export addQM, prodQM, negQM, scalarProdQM;
 
+export fromQMtoPoly;
 export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     sqf := proc(poly)
@@ -105,6 +109,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     # We implement the vector-like data structure
     # using the `table` data structure
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     zeroPO := proc(nat)
     local elem, i;
     local basisPO, _zerosPO, _po, po;
@@ -118,6 +125,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return po;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     unitPO := proc(nat)
     local output := zeroPO(nat);
         output[1] := 1;
@@ -129,6 +139,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     addPO := proc(p1, p2, nat)
     local i;
     local output := zeroPO(nat);
@@ -139,6 +152,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     prodPO := proc(p1, p2, nat, x)
     local i, j;
     local output := zeroPO(nat);
@@ -160,6 +176,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     scalarProdPO := proc(p, sos, nat, x)
     local i;
     local output := zeroPO(nat);
@@ -385,7 +404,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                 c1 := todo[j];
                 c2 := todo[k];
                 _gamma := lemma_1_5(c1, c2, a, b);
-                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(SemiAlgebraic([(x-c1)*(x-c2)-_gamma*(x-a)*(x-b) < 0], [x])));
+                DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, lprint(SemiAlgebraic([(x-c1)*(x-c2)-_gamma*(x-a)*(x-b) < 0], [x])));
 
                 _temp := zeroPO(nat);
                 updatePONatEntry(_temp,           1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
@@ -417,6 +436,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return factorable_sos, output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     case_3_1 := proc(a, b, nat, x)
     local output := zeroQM(nat);
         if a = b then
@@ -431,6 +453,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     case_3_2 := proc(a, b, nat, x)
     local output := zeroQM(nat);
         updatePONatEntry(output,       (x-a), (x-b)^2);
@@ -438,6 +463,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     case_3_3 := proc(a, b, c, nat, x)
     local output := zeroQM(nat);
     local alpha := (b-a)/(c-b);
@@ -458,6 +486,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local min_b, min_a_c, sols;
 
         while true do
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
             sols := [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)];
             min_a_c := min(map(x_arg -> subs({n=n_curr,x=evalf(x_arg)}, p), sols));
             min_b := subs({n=n_curr,x=-b}, p);
@@ -474,6 +503,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return s0, s1;
     end proc;
 
+    # Assume 0 < a < b, 0 < a < c
     lemma_3_2 := proc(a, b, c, x)
     local alpha, beta, s0, s1;
         if c = b then
@@ -490,36 +520,42 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         end if;
     end proc;
 
+    # Computes certificates of (x-a) * (x-b)(x-c)
+    # Assume a < b < c
+    # Assume a is the left most endpoint of the semialgebraic set
+    # Assume b = -c, otherwise
+    # x \mapsto x + (b+c)/2;
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     case_3_4 := proc(a, b, c, d, nat, x)
-        # Assume b = -c, otherwise
-        # x \mapsto x + (b+c)/2;
     local _a := a - (b+c)/2, _b := b - (b+c)/2;
     local _c := c - (b+c)/2, _d := d - (b+c)/2;
 
-        # Compute certificates of g1 in QM(g1 g2 g3)
+        # 1. Compute certificates of g1 in QM(g1 g2 g3)
     local g1__1, g1__g1g2g3;
         g1__1, g1__g1g2g3 := lemma_3_1(_c, -_a, _d, x);
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__1 < 0], [x])));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__g1g2g3 < 0], [x])));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 in QM(g1 g2 g3)", expand((x-_a)-(g1__1 + g1__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__1 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of Lemma 3.1 in construction", SemiAlgebraic([g1__g1g2g3 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g1 in QM(g1 g2 g3)", expand((x-_a)-(g1__1 + g1__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
 
-        # Compute certificates of g2 in QM(g1 g2 g3)
+        # 2. Compute certificates of g2 in QM(g1 g2 g3)
     local g2__1, g2__g1g2g3;
         g2__1, g2__g1g2g3 := lemma_3_2(_c, -_a, _d, x);
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__1 < 0], [x])));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__g1g2g3 < 0], [x])));
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g2 in QM(g1 g2 g3)", expand((x-_b)*(x+_b)-(g2__1 + g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__1 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, lprint(">> Verification of Lemma 3.2 in construction", SemiAlgebraic([g2__g1g2g3 < 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g2 in QM(g1 g2 g3)", expand((x-_b)*(x+_b)-(g2__1 + g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
 
     local g1g2__1 := g1__1*g2__1 + g1__g1g2g3*g2__g1g2g3*((x-_a)*(x-_b)*(x-_c)*(-(x-_d)))^2;
     local g1g2__g1g2g3 := g1__1*g2__g1g2g3 + g1__g1g2g3*g2__1;
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1 g2 g3)", expand((x-_a)*(x-_b)*(x-_c)-(g1g2__1 + g1g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g1 g2 in QM(g1 g2 g3)", expand((x-_a)*(x-_b)*(x-_c)-(g1g2__1 + g1g2__g1g2g3*(x-_a)*(x-_b)*(x-_c)*(-(x-_d))))));
 
     local g1g2g3__g1g3 := g2__1;
     local g1g2g3__g2 := g2__g1g2g3*((x-_a)*(x-_d))^2;
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 g3 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c)*(-(x-_d))-(g1g2g3__g1g3*((x-_a)*(-(x-_d))) + g1g2g3__g2*(x-_b)*(x-_c)))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g1 g2 g3 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c)*(-(x-_d))-(g1g2g3__g1g3*((x-_a)*(-(x-_d))) + g1g2g3__g2*(x-_b)*(x-_c)))));
 
     local cert_g1g3 := case_3_1(_a, _d, map(poly -> subs(x=x+(b+c)/2, poly), nat), x);
 
@@ -528,7 +564,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local sos_g2 := g1g2__g1g2g3*g1g2g3__g2;
     local sos_g3 := g1g2__g1g2g3*g1g2g3__g1g3*cert_g1g3[-(x-_d)];
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c) - (sos_1 + sos_g1*(x-_a) + sos_g2*(x-_b)*(x-_c) + sos_g3*(-(x-_d))))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-_a)*(x-_b)*(x-_c) - (sos_1 + sos_g1*(x-_a) + sos_g2*(x-_b)*(x-_c) + sos_g3*(-(x-_d))))));
 
     local output := zeroQM(nat);
         #updateQMNatEntry(output, nat_gen, sos_multiplier);
@@ -537,7 +573,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         updateQMNatEntry(output, (x-b)*(x-c), subs(x=x-(b+c)/2, sos_g2));
         updateQMNatEntry(output,      -(x-d), subs(x=x-(b+c)/2, sos_g3));
 
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION, print(">> Verification of g1 g2 in QM(g1, g2, g3)", expand((x-a)*(x-b)*(x-c) - (output[1] + output[x-a]*(x-a) + output[expand((x-b)*(x-c))]*(x-b)*(x-c) + output[-(x-d)]*(-(x-d))))));
         return output;
     end proc;
 
@@ -589,11 +625,17 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         end if;
 
     local n_curr := 0, min_b_c, min_outside;
+    local sols;
         while true do
             sols := select(point -> evalf(point) < -b or evalf(point) > -c,
                            [RealDomain:-solve(subs({n=n_curr}, pDeriv)=0,x)]);
-            #min_outside := min(map(x_arg -> evalf(subs({n=n_curr, x=x_arg}, p)), sols));
-            min_outside := min(map(x_arg -> evala(subs({n=n_curr, x=x_arg}, p)), sols));
+            min_outside :=
+            min(
+                map(x_arg ->
+                    #evalf(subs({n=n_curr, x=x_arg}, p)),
+                    evala(subs({n=n_curr, x=x_arg}, p)),
+                    sols)
+               );
             min_b_c := subs({n=n_curr, x=-b}, p);
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> n_curr", n_curr));
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> min_outside", min_outside));
@@ -616,18 +658,81 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return s0, s1;
     end proc;
 
-    # TODO
-    case_3_5 := proc(e, a, b, c, f, nat, x)
-    local _e := e - (b+c)/2, _a := a - (b+c)/2;
-    local _b := b - (b+c)/2, _c := c - (b+c)/2;
-    local _f := f - (b+c)/2;
+    # Computes certificates of (x-a)(x-b) * (x-c)(x-d)
+    # Assume e < a < b < c < d < f
+    # Assume a, b, c, d are endpoints 'in-between' the semialgebraic set
+    # Assume b = -c, otherwise
+    # x \mapsto x + (b+c)/2;
+    # Assume g1 = (x+a), g2 = (x+b)(x+c), g3 = (x-c)(x-d), g4 = -(x-e)
+    # i.e., g1 = (x+_e), g2 = (x+_a)(x+_c), g3 = (x-_c)(x-_d), g4 = -(x-_f)
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
+    case_3_5 := proc(a, b, c, d, e, f, nat, x)
+    local _a := a - (b+c)/2, _b := b - (b+c)/2;
+    local _c := c - (b+c)/2, _d := d - (b+c)/2;
+    local _e := e - (b+c)/2, _f := f - (b+c)/2;
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _e", _e));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _a", _a));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _b", _b));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _c", _c));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _d", _d));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _f", _f));
 
+        # 1. Find certificate of g2 in QM(g1 g2 g3 g4)
+    local s0_g2_in_g1g2g3g4, s1_g2_in_g1g2g3g4;
+        s0_g2_in_g1g2g3g4, s1_g2_in_g1g2g3g4 := lemma_3_4(-_e, -_a, _c, _d, _f, x);
+
+        # 2. Find certificate of g2 g3 in QM(g3, g1 g2 g4)
+    local s0_g2g3_in_g1g2g4:= s0_g2_in_g1g2g3g4;
+    local s1_g2g3_in_g1g2g4:= g3^2*s1_g2_in_g1g2g3g4;
+
+        # 3. Find certificate of g1 g2 g4 in QM(g1, g2, g4)
+    local shifted_basis1 := map(poly -> subs(x=x+(b+c)/2, poly), nat);
+
+    local cert_g1g4 := case_3_1(_e, _f, shifted_basis1, x);
+        #print(">> cert_g1g4", cert_g1g4);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> check cert_g1g4", fromQMtoPoly(cert_g1g4)));
+    local s0_2_ := cert_g1g4[1];
+    local s1_2_ := cert_g1g4[x-_e];
+    local s2_2_ := cert_g1g4[-x+_f];
+
+    local cert_g1g2 := case_3_4(_e, _a, _b, _f, shifted_basis1, x);
+        #print(">> cert_g1g2", cert_g1g2);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> check cert_g1g2", fromQMtoPoly(cert_g1g2)));
+    local s0_3_ := cert_g1g2[1];
+    local s1_3_ := cert_g1g2[x-_e];
+    local s2_3_ := cert_g1g2[expand((x-_a)*(x-_b))];
+    local s3_3_ := cert_g1g2[-x+_f];
+
+    local shifted_basis2 := map(poly -> subs(x=-x+(b+c)/2, poly), nat);
+
+    local cert_g2g4 := negQM(case_3_4(-_f, -_b, -_a, -_e, shifted_basis2, x), shifted_basis2, x);
+        #print(">> cert_g2g4", cert_g2g4);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> check cert_g2g4", fromQMtoPoly(cert_g2g4)));
+    local s0_4_ := cert_g2g4[1];
+    local s1_4_ := cert_g2g4[x-_e];
+    local s2_4_ := cert_g2g4[expand((x-_a)*(x-_b))];
+    local s3_4_ := cert_g2g4[-x+_f];
+
+    local s0_1 := s1_g2g3_in_g1g2g4*(        s1_2_*s0_3_ + s2_2_*s0_4_);
+    local s1_1 := s1_g2g3_in_g1g2g4*(        s1_2_*s1_3_ + s2_2_*s1_4_);
+    local s2_1 := s1_g2g3_in_g1g2g4*(s0_2_ + s1_2_*s2_3_ + s2_2_*s2_4_);
+    local s4_1 := s1_g2g3_in_g1g2g4*(        s1_2_*s3_3_ + s2_2_*s3_4_);
+
+        # 4. Translate back to original coordinates using data structure for QMs
     local output := zeroQM(nat);
-        #updateQMNatEntry(output, nat_gen, sos_multiplier);
+        updateQMNatEntry(output,           1, subs(x=x-(b+c)/2, s0_1));
+        updateQMNatEntry(output,         x-e, subs(x=x-(b+c)/2, s1_1));
+        updateQMNatEntry(output, (x-a)*(x-b), subs(x=x-(b+c)/2, s2_1));
+        updateQMNatEntry(output, (x-c)*(x-d), subs(x=x-(b+c)/2, s0_g2g3_in_g1g2g4));
+        updateQMNatEntry(output,      -(x-f), subs(x=x-(b+c)/2, s4_1));
         return output;
     end proc;
 
     # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     # p, q \in nat
     # Output:
     # QMtable of p*q
@@ -695,6 +800,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     # We implement the vector-like data structure
     # using the `table` data structure
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     zeroQM := proc(nat)
     local elem, i;
     local basisQM, _zerosQM, _qm, qm;
@@ -705,6 +813,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return qm;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     unitQM := proc(nat)
     local output := zeroQM(nat);
         output[1] := 1;
@@ -716,6 +827,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     addQM := proc(q1, q2, nat)
     local i;
     local output := zeroQM(nat);
@@ -726,6 +840,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     # Input:
     # q1, q2 \in QMtable
     # Output:
@@ -778,6 +895,24 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
+    # Output:
+    # returns p but replacing every x with -x
+    negQM := proc(p, nat, x)
+    local i;
+    local output := zeroQM(map(poly -> subs(x=-x, poly), nat));
+    local _indices := [indices(p, 'nolist')];
+        for i from 1 to nops(_indices) do
+            output[expand(subs(x=-x,_indices[i]))] := subs(x=-x, p[_indices[i]]);
+        end do;
+        return output;
+    end proc;
+
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     scalarProdQM := proc(p, sos, nat, x)
     local i;
     local output := zeroQM(nat);
@@ -788,6 +923,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     split_basis_PO := proc(basis_element, nat);
     local i, elem;
     local todo := map(
@@ -803,6 +941,9 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         end do;
     end proc;
 
+    # Input:
+    # nat is the natural generator basis
+    # encoded as a list of polynomials
     liftPO2QM := proc(f, nat, a_0, b_k, x)
     local factorable_sos, certPO, basis, _basis;
     local st;
@@ -843,16 +984,18 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         return output;
     end proc;
 
-    checkCorrectnessQM := proc(p, f);
+    fromQMtoPoly := proc(p)
     local y;
-        return evalb(0
-                     = expand(f
-                              - add(y,
-                                    y in map(
-                                        proc(eq)
-                                        local ops := op(eq);
-                                            ops[1]*ops[2]
-                                        end proc,
-                                        [indices(p, 'pairs')]))));
+        return simplify(add(y,
+                            y in map(
+                                proc(eq)
+                                local ops := op(eq);
+                                    ops[1]*ops[2]
+                                end proc,
+                                [indices(p, 'pairs')])));
+    end proc;
+
+    checkCorrectnessQM := proc(p, f)
+        return evalb(0 = expand(f - fromQMtoPoly(p)));
     end proc;
 end module;

@@ -1,12 +1,8 @@
 restart;
 
-#with(SolveTools, SemiAlgebraic);
-#with(RegularChains, SemiAlgebraicSetTools, PolynomialRing);
-#with(SemiAlgebraicSetTools, IsEmpty);
-
 with(CertSatQM):
 
-printlevel := -1;
+#printlevel := -1;
 #printlevel := 8;
 
 a := 12;
