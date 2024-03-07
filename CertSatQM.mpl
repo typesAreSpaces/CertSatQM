@@ -1096,7 +1096,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     showQM := proc(p)
     local _indices := [indices(p, 'nolist')];
         for i from 1 to nops(_indices) do
-          lprint("Basis:", _indices[i], " SOS multiplier:", simplify(p[_indices[i]]));
+            lprint("Basis:", _indices[i], " SOS multiplier:", simplify(p[_indices[i]]));
         end do;
     end proc;
 
