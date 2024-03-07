@@ -12,6 +12,7 @@ QUIET_MODE=
 all: ${OUTPUT}
 
 ${OUTPUT}: ${PROJECT_NAME}.mla ${TEST_FILE}
+	#maple ${TEST_FILE} ${QUIET_MODE}
 	maple ${TEST_FILE} ${QUIET_MODE} > ${OUTPUT}
 
 ${PROJECT_NAME}.mla: ${PROJECT_NAME}.mpl

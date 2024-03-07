@@ -1,5 +1,5 @@
 $define ENABLE_VERIFICATION false
-$define ENABLE_DEBUGGING    true
+$define ENABLE_DEBUGGING    false
 $define ENABLE_TIMING       false
 
 $define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
@@ -64,7 +64,7 @@ export cases;
 export zeroQM, unitQM, updateQMNatEntry;
 export addQM, prodQM, negQM, scalarProdQM;
 
-export fromQMtoPoly;
+export fromQMtoPoly, showQM;
 export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     sqf := proc(poly)
@@ -261,7 +261,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         sep_roots_ords := [
             op(sep_roots_ords),
             [
-                # TODO
+                # DEBUG
                 # I'm not sure if this should be sorted
                 select(_root -> _root <= first_end_point, f_roots),
                 [-infinity, first_end_point]
@@ -272,7 +272,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
             sep_roots_ords :=
             [op(sep_roots_ords),
              [
-                 # TODO
+                 # DEBUG
                  # I'm not sure if this should be sorted
                  select
                  (_root ->
@@ -456,6 +456,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     # Input:
     # nat is the natural generator basis
     # encoded as a list of polynomials
+    # Assume a < b
     case_3_2 := proc(a, b, nat, x)
     local output := zeroQM(nat);
         updatePONatEntry(output,       (x-a), (x-b)^2);
@@ -466,6 +467,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     # Input:
     # nat is the natural generator basis
     # encoded as a list of polynomials
+    # Assume a < b < c
     case_3_3 := proc(a, b, c, nat, x)
     local output := zeroQM(nat);
     local alpha := (b-a)/(c-b);
@@ -669,6 +671,12 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     # nat is the natural generator basis
     # encoded as a list of polynomials
     case_3_5 := proc(a, b, c, d, e, f, nat, x)
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> e", e));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> a", a));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> b", b));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> c", c));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> d", d));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> f", f));
     local _a := a - (b+c)/2, _b := b - (b+c)/2;
     local _c := c - (b+c)/2, _d := d - (b+c)/2;
     local _e := e - (b+c)/2, _f := f - (b+c)/2;
@@ -685,7 +693,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
         # 2. Find certificate of g2 g3 in QM(g3, g1 g2 g4)
     local s0_g2g3_in_g1g2g4:= s0_g2_in_g1g2g3g4;
-    local s1_g2g3_in_g1g2g4:= g3^2*s1_g2_in_g1g2g3g4;
+    local s1_g2g3_in_g1g2g4:= ((x-_c)*(x-_d))^2*s1_g2_in_g1g2g3g4;
 
         # 3. Find certificate of g1 g2 g4 in QM(g1, g2, g4)
     local shifted_basis1 := map(poly -> subs(x=x+(b+c)/2, poly), nat);
@@ -742,56 +750,128 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local roots_q := sort([solve(q=0,x)]);
     local num_roots_p := nops(roots_p);
     local num_roots_q := nops(roots_q);
+    local shifted_basis;
+        # DEBUG
         #print(">> p", p);
         #print(">> q", q);
         #print(">> roots p", roots_p);
         #print(">> roots q", roots_q);
 
-        if num_roots_p = num_roots_q and num_roots_p = 1 then
+        # Case product of the form (x-a) * -(x-b)
+        if num_roots_p = 1 and num_roots_q = 1 then
+            # Case (x-a) * (x-a)
             if lcoeff(p) = lcoeff(q) then
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 1"));
                 updateQMNatEntry(output, 1, p^2);
                 return output;
+                # Case (x-a) * -(x-b), a <= b
             else
                 #print(">> case_3_1 1");
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 2"));
                 return case_3_1(roots_p[1], roots_q[1], nat, x);
             end if;
         end if;
 
-        if num_roots_p = 1 and num_roots_q = 2 and roots_q[1] < roots_q[2] then
-            if subs(x=roots_p[1], q) = 0 then
-                #print(">> case_3_2 2");
-                return case_3_2(roots_q[1], roots_q[2], nat, x);
-            else
-                #print(">> case_3_4 2");
-                return case_3_4(roots_p[1], roots_q[1], roots_q[2], b_k, nat, x);
-            end if
+        # Case product of the form (+/-)(x-a) * (x-b)(x-c), a <= b < c
+        if num_roots_p = 1 and num_roots_q = 2 then
+            # Case product of the form (x-a) * (x-b)(x-c)
+            if roots_p[1] <= roots_q[1] then
+                # Case product of the form (+/-)(x-a) * (x-a)(x-c)
+                if subs(x=roots_p[1], q) = 0 then
+                    #print(">> case_3_2 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 3"));
+                    return case_3_2(roots_q[1], roots_q[2], nat, x);
+                    # Case product of the form (+/-)(x-a) * (x-b)(x-c), a < b
+                else
+                    #print(">> case_3_4 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 4"));
+                    return case_3_4(roots_p[1], roots_q[1], roots_q[2], b_k, nat, x);
+                end if
+            end if;
+
+            # Case product of the form -(x-a) * (x-b)(x-c), b < c <= a
+            if roots_q[2] <= roots_p[1] then
+                shifted_basis := map(poly -> subs(x=-x, poly), nat);
+                # Case product of the form -(x-c) * (x-b)(x-c), b < c
+                if subs(x=roots_p[1], q) = 0 then
+                    #print(">> case_3_2 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 5"));
+                    return negQM(
+                        case_3_2(-roots_q[2], -roots_q[1], shifted_basis, x),
+                        shifted_basis, x);
+                    # Case product of the form -(x-a) * (x-b)(x-c), b < c < a
+                else
+                    #print(">> case_3_4 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 6"));
+                    return negQM(
+                        case_3_4(-roots_p[1], -roots_q[2], -roots_q[1], -a_0, shifted_basis, x),
+                        shifted_basis, x);
+                end if
+            end if;
         end if;
 
-        if num_roots_q = 1 and num_roots_p = 2 and roots_p[1] < roots_p[2] then
-            if subs(x=roots_q[1], p) = 0 then
-                #print(">> case_3_2 3");
-                return case_3_2(roots_p[1], roots_p[2], nat, x);
-            else
-                #print(">> case_3_4 3");
-                return case_3_4(roots_q[1], roots_p[1], roots_p[2], b_k, nat, x);
-            end if
+        # Case product of the form (x-a)(x-b) * (+/-)(x-c)
+        if num_roots_p = 2 and num_roots_q = 1 then
+            # Case product of the form (x-a) * (x-b)(x-c)
+            if roots_q[1] <= roots_p[1] then
+                # Case product of the form (+/-)(x-a) * (x-a)(x-c)
+                if subs(x=roots_q[1], p) = 0 then
+                    #print(">> case_3_2 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 7"));
+                    return case_3_2(roots_p[1], roots_p[2], nat, x);
+                    # Case product of the form (+/-)(x-a) * (x-b)(x-c), a < b
+                else
+                    #print(">> case_3_4 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 8"));
+                    return case_3_4(roots_q[1], roots_p[1], roots_p[2], b_k, nat, x);
+                end if
+            end if;
+
+            # Case product of the form -(x-a) * (x-b)(x-c), b < c <= a
+            if roots_p[2] <= roots_q[1] then
+                shifted_basis := map(poly -> subs(x=-x, poly), nat);
+                # Case product of the form -(x-c) * (x-b)(x-c), b < c
+                if subs(x=roots_q[1], p) = 0 then
+                    #print(">> case_3_2 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 9"));
+                    return negQM(
+                        case_3_2(-roots_p[2], -roots_p[1], shifted_basis, x),
+                        shifted_basis, x);
+                    # Case product of the form -(x-a) * (x-b)(x-c), b < c < a
+                else
+                    #print(">> case_3_4 2");
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 10"));
+                    return negQM(
+                        case_3_4(-roots_q[1], -roots_p[2], -roots_p[1], -a_0, shifted_basis, x),
+                        shifted_basis, x);
+                end if
+            end if;
         end if;
 
+        # Case product of the form (x-a)(x-b) * (x-c)(x-d), b = c or b \neq c
         if num_roots_p = 2 and num_roots_q = 2 then
+            # Case product of the form (x-a)(x-b) * (x-b)(x-c), a < b < c
             if subs(x=roots_p[2], q) = 0 then
                 #print(">> case_3_3 4 1");
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 11"));
                 return case_3_3(roots_p[1], roots_p[2], roots_q[2], nat, x);
             end if;
+            # Case product of the form (x-c)(x-d) * (x-b)(x-c), b < c < d
             if subs(x=roots_q[2], p) = 0 then
                 #print(">> case_3_3 4 2");
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 12"));
                 return case_3_3(roots_q[1], roots_q[2], roots_p[2], nat, x);
             end if;
+            # Case product of the form (x-a)(x-b) * (x-c)(x-d), a < b < c < d
             if evalb(roots_p[2] < roots_q[1]) then
                 #print(">> case_3_5 4 1");
-                return case_3_5(a_0, roots_p[1], roots_p[2], roots_q[1], roots_q[2], b_k, nat, x)
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 13"));
+                return case_3_5(roots_p[1], roots_p[2], roots_q[1], roots_q[2], a_0, b_k, nat, x)
+                # Case product of the form (x-a)(x-b) * (x-c)(x-d), c < d < a < b
             else
                 #print(">> case_3_5 4 2");
-                return case_3_5(a_0, roots_q[1], roots_q[2], roots_p[1], roots_p[2], b_k, nat, x)
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Case 14"));
+                return case_3_5(roots_q[1], roots_q[2], roots_p[1], roots_p[2], a_0, b_k, nat, x)
             end if;
         end if;
 
@@ -853,6 +933,10 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local _indices := [indices(q1, 'nolist')];
     local size := nops(_indices);
     local _basis, basis_element;
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> @prodQM fromQMtoPoly q1", fromQMtoPoly(q1)));
+        #showQM(q1);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> @prodQM fromQMtoPoly q2", fromQMtoPoly(q2)));
+        #showQM(q2);
         for i from 1 to size do
             if q1[_indices[i]] = 0 then
                 next;
@@ -862,21 +946,29 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                     next;
                 end if;
                 if evalb(_indices[i] = _indices[j]) then
+                    # DEBUG
+                    #print(">> i", i);
+                    #print(">> indices[i]", _indices[i]);
+                    #lprint(">> q1[indices[i]]", q1[_indices[i]]);
+                    #lprint(">> q2[indices[j]]", q2[_indices[j]]);
                     output[1] := output[1] + _indices[i]^2*q1[_indices[i]]*q2[_indices[j]];
                 else
                     if _indices[i] = 1 then
-                        output[_indices[j]] := q2[_indices[j]];
+                        #output[_indices[j]] := q2[_indices[j]];
+                        output[_indices[j]] := q1[_indices[i]]*q2[_indices[j]];
                     elif _indices[j] = 1 then
-                        output[_indices[i]] := q1[_indices[i]];
+                        #output[_indices[i]] := q1[_indices[i]];
+                        output[_indices[i]] := q1[_indices[i]]*q2[_indices[j]];
                     else
                         # DEBUG
                         #print(">> i", i);
                         #print(">> j", j);
                         #print(">> indices[i]", _indices[i]);
                         #print(">> indices[j]", _indices[j]);
-                        #print(">> q1[indices[i]]", q1[_indices[i]]);
-                        #print(">> q2[indices[j]]", q2[_indices[j]]);
+                        #lprint(">> q1[indices[i]]", q1[_indices[i]]);
+                        #lprint(">> q2[indices[j]]", q2[_indices[j]]);
                         _temp := cases(_indices[i], _indices[j], a_0, b_k, nat, x);
+                        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> fromQMtoPoly _temp", fromQMtoPoly(_temp)));
                         #print(">> _temp @ prodQM", _temp);
                         #print(">> _temp@prodQM", _temp);
                         # Update
@@ -885,13 +977,15 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                         for basis_element in todo do
                             #print(">> basis_element", basis_element);
                             #print(">> _temp[basis_element]", _temp[basis_element]);
-                            _temp[basis_element] := q1[_indices[i]]*q2[_indices[j]]*_temp[basis_element];
+                            _temp[basis_element] := q1[_indices[i]]*q2[_indices[j]]*_temp[expand(basis_element)];
                         end do;
                         output := addQM(output, _temp, nat);
                     end if;
                 end if;
             end do;
         end do;
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> @prodQM fromQMtoPoly output", fromQMtoPoly(output)));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> @prodQM haha check", evalb(expand(fromQMtoPoly(q1)*fromQMtoPoly(q2) - fromQMtoPoly(output)) = 0)));
         return output;
     end proc;
 
@@ -968,7 +1062,11 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                     if ENABLE_TIMING then
                         st := time();
                     end if;
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 1 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 2 one step within _basis@liftPO2QM", fromQMtoPoly(_temp2)));
                     _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 3 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">>"));
                     if ENABLE_TIMING then
                         print(">> Time prodQM", time() - st);
                     end if;
@@ -993,6 +1091,13 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                                     ops[1]*ops[2]
                                 end proc,
                                 [indices(p, 'pairs')])));
+    end proc;
+
+    showQM := proc(p)
+    local _indices := [indices(p, 'nolist')];
+        for i from 1 to nops(_indices) do
+          lprint("Basis:", _indices[i], " SOS multiplier:", simplify(p[_indices[i]]));
+        end do;
     end proc;
 
     checkCorrectnessQM := proc(p, f)
