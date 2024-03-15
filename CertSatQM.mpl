@@ -1,13 +1,20 @@
-$define ENABLE_VERIFICATION false
 $define ENABLE_DEBUGGING    false
-$define ENABLE_TIMING       false
+$define ENABLE_VERIFICATION false
+$define LOG_TIME
 
-$define DEBUG(F, L, y, x) if (y) then lprint("Debugging file ", F, " at line ", L); x; end if
+$define DEBUG_EXIT lprint(">> Debugging, getting out"); return 0
+$define DEBUG(F, L, y, x) if (y) then lprint(">> Debugging file ", F, " at line ", L); x; end if
+
+$define START_LOG_TIME(X, S) stack_level:=stack_level+1;fd := FileTools:-Text:-Open("log_time.txt", append);local _log_time_S := time();FileTools:-Text:-WriteString(fd, cat("Start: ", X, " ", convert(stack_level, string), "\n"));FileTools:-Text:-Close(fd);
+$define END_LOG_TIME(X, S) fd := FileTools:-Text:-Open("log_time.txt", append);FileTools:-Text:-WriteString(fd, cat("End: ", X, " ", convert(stack_level, string), "\nTime: ", convert(time() - _log_time_S, string), "\n"));FileTools:-Text:-Close(fd);stack_level:=stack_level-1;
+$define INIT_START_LOG_TIME(X, S) local fd;START_LOG_TIME(X, S)
 
 with(combinat, powerset);
 with(SolveTools, SemiAlgebraic);
 with(RegularChains, SemiAlgebraicSetTools, PolynomialRing);
 with(SemiAlgebraicSetTools, IsEmpty);
+with(BasicLemma, lift);
+with(StrictlyPositiveCert, spCertificates);
 
 #_pwd := currentdir();
 #currentdir(homedir);
@@ -21,51 +28,11 @@ with(SemiAlgebraicSetTools, IsEmpty);
 
 CertSatQM := module() option package;
 
-local sqf;
+$ifdef LOG_TIME
+local stack_level := -1;
+$endif
 
-local auxiliarSosStep;
-export zeroPO, unitPO, updatePONatEntry;
-export addPO, prodPO,  scalarProdPO;
-
-export semiAlgebraicIntervals;
-local ord, boundInfo;
-local decompositionFromBasis;
-
-local checkMembership;
-local lemma_1_5;
-local natGens;
-
-local checkSosMultipliers;
-local checkCorrectnessPO;
-
-export inductiveCert;
-
-# products of the form (x-a), -(x-b), a \leq b
-export case_3_1;
-
-# products of the form (x-a), (x-a)(x-b), a < b
-export case_3_2;
-
-# products of the form (x-a)(x-b), (x-b)(x-c), a < b < c
-export case_3_3;
-
-local lemma_3_1;
-local lemma_3_2;
-# products of the form (x-a), (x-b)(x-c), a < b < c
-export case_3_4;
-
-local lemma_3_4_compute_A;
-local lemma_3_4;
-# products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
-export case_3_5;
-
-export cases;
-
-export zeroQM, unitQM, updateQMNatEntry;
-export addQM, prodQM, negQM, scalarProdQM;
-
-export fromQMtoPoly, showQM;
-export split_basis_PO, liftPO2QM, checkCorrectnessQM;
+local sqf, bound_info;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -84,6 +51,119 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
         # h is the sums of squares part
         return expand(f_u), h;
     end proc;
+
+    bound_info := proc(x, bound, eps)
+$ifdef LOG_TIME
+        INIT_START_LOG_TIME("bound_info",0)
+$endif
+    local i1, i2, j1, j2;
+        # This is a bounded bounduality
+        if(nops(bound) = 2) then
+            i1 := simplify(op(bound[1])[1]);
+            i2 := simplify(op(bound[1])[2]);
+            j1 := simplify(op(bound[2])[1]);
+            j2 := simplify(op(bound[2])[2]);
+            if evalb(i1 = x) then
+                if evalb(j1 = x) then
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [min(i2, j2)+eps, max(i2, j2)-eps];
+                else
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [min(i2, j1)+eps, max(i2, j1)-eps];
+                end if;
+            else
+                if evalb(j1 = x) then
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [min(i1, j2)+eps, max(i1, j2)-eps];
+                else
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [min(i1, j1)+eps, max(i1, j1)-eps];
+                end if;
+            end if;
+            # This is an equality or unbounded bounduality
+        else
+            i1 := simplify(op(bound[1])[1]);
+            j1 := simplify(op(bound[1])[2]);
+            if type(bound[1], `=`) then
+                if evalb(i1 = x) then
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [j1, j1];
+                else
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [i1, i1];
+                end if;
+            end if;
+            if type(bound[1], `<=`) then
+                if evalb(i1 = x) then
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [-infinity, j1-eps];
+                else
+$ifdef LOG_TIME
+                    END_LOG_TIME("bound_info",0)
+$endif
+                    return [i1+eps, infinity];
+                end if;
+            end if;
+        end if;
+    end proc;
+
+local auxiliarSosStep;
+export zeroPO, unitPO, updatePONatEntry;
+export addPO, prodPO,  scalarProdPO;
+
+export semiAlgebraicIntervals;
+local ord;
+local decompositionFromBasis;
+
+local checkMembership;
+local lemma_1_5;
+local natGens;
+
+local checkSosMultipliers;
+local checkCorrectnessPO;
+
+export inductiveCert;
+
+# products of the form (x-a), -(x-b), a \leq b
+local case_3_1;
+
+# products of the form (x-a), (x-a)(x-b), a < b
+local case_3_2;
+
+# products of the form (x-a)(x-b), (x-b)(x-c), a < b < c
+local case_3_3;
+
+local lemma_3_1;
+local lemma_3_2;
+# products of the form (x-a), (x-b)(x-c), a < b < c
+local case_3_4;
+
+local lemma_3_4_compute_A;
+local lemma_3_4;
+# products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
+local case_3_5;
+
+export cases;
+
+export zeroQM, unitQM, updateQMNatEntry;
+export addQM, prodQM, negQM, scalarProdQM;
+
+export fromQMtoPoly, showQM;
+export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     auxiliarSosStep := proc(sos, _basis_element, x)
         if sos = 1 then
@@ -191,7 +271,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
 
     semiAlgebraicIntervals := proc(basis, x)
         return map
-        (bound -> boundInfo(x, bound, 0),
+        (bound -> bound_info(x, bound, 0),
          SemiAlgebraic(map(g -> g >= 0, basis), [x]));
     end proc;
 
@@ -199,48 +279,6 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     local g, T;
         g := subs(x = T + _point, f);
         return ldegree(expand(g), T);
-    end proc;
-
-    boundInfo := proc(x, bound, eps)
-    local i1, i2, j1, j2;
-        # This is a bounded inequality
-        if(nops(bound) = 2) then
-            i1 := simplify(op(bound[1])[1]);
-            i2 := simplify(op(bound[1])[2]);
-            j1 := simplify(op(bound[2])[1]);
-            j2 := simplify(op(bound[2])[2]);
-            if evalb(i1 = x) then
-                if evalb(j1 = x) then
-                    return [min(i2, j2)+eps, max(i2, j2)-eps];
-                else
-                    return [min(i2, j1)+eps, max(i2, j1)-eps];
-                end if;
-            else
-                if evalb(j1 = x) then
-                    return [min(i1, j2)+eps, max(i1, j2)-eps];
-                else
-                    return [min(i1, j1)+eps, max(i1, j1)-eps];
-                end if;
-            end if;
-            # This is an equality or unbounded inequality
-        else
-            i1 := simplify(op(bound[1])[1]);
-            j1 := simplify(op(bound[1])[2]);
-            if type(bound[1], `=`) then
-                if evalb(i1 = x) then
-                    return [j1, j1];
-                else
-                    return [i1, i1];
-                end if;
-            end if;
-            if type(bound[1], `<=`) then
-                if evalb(i1 = x) then
-                    return [-infinity, j1-eps];
-                else
-                    return [i1+eps, infinity];
-                end if;
-            end if;
-        end if;
     end proc;
 
     # Assumption:
@@ -1041,13 +1079,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     liftPO2QM := proc(f, nat, a_0, b_k, x)
     local factorable_sos, certPO, basis, _basis;
     local st;
-        if ENABLE_TIMING then
-            st := time();
-        end if;
         factorable_sos, certPO := inductiveCert(f, nat, x);
-        if ENABLE_TIMING then
-            print(">> Time inductiveCert", time() - st);
-        end if;
     local output := zeroQM(nat), _temp1, _temp2;
         #print(">> factorable_sos", factorable_sos);
         for basis in [indices(certPO, 'nolist')] do
@@ -1059,17 +1091,11 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
                     _temp2 := zeroQM(nat);
                     updateQMNatEntry(_temp2, nat[_basis], 1);
                     st := time();
-                    if ENABLE_TIMING then
-                        st := time();
-                    end if;
                     DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 1 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
                     DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 2 one step within _basis@liftPO2QM", fromQMtoPoly(_temp2)));
                     _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
                     DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 3 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
                     DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">>"));
-                    if ENABLE_TIMING then
-                        print(">> Time prodQM", time() - st);
-                    end if;
                 end do;
                 _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
                 output := addQM(output, _temp1, nat);
@@ -1094,6 +1120,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     end proc;
 
     showQM := proc(p)
+    local i;
     local _indices := [indices(p, 'nolist')];
         for i from 1 to nops(_indices) do
             lprint("Basis:", _indices[i], " SOS multiplier:", simplify(p[_indices[i]]));

@@ -1,6 +1,8 @@
 PROJECT_NAME=CertSatQM
 TEST_FILE=test.mpl
-OUTPUT=data/output.txt
+SUFFIX=
+LOG_FILE=log_time${SUFFIX}.txt
+OUTPUT=output${SUFFIX}.txt
 
 QUIET_MODE=
 QUIET_MODE=-q
@@ -12,6 +14,7 @@ QUIET_MODE=
 all: ${OUTPUT}
 
 ${OUTPUT}: ${PROJECT_NAME}.mla ${TEST_FILE}
+	if [ -f ${LOG_FILE} ]; then rm ${LOG_FILE}; fi;
 	#maple ${TEST_FILE} ${QUIET_MODE}
 	maple ${TEST_FILE} ${QUIET_MODE} > ${OUTPUT}
 
