@@ -50,7 +50,7 @@ for i from 4 to 20 by 2 do
         lprint(">> f", f);
 
         st := time();
-        qmCert := liftPO2QM(f, nat, a_0, b_k, x);
+        qmCert := certInQM(f, nat, a_0, b_k, x);
         print(">> Time CertSatQM", time() - st);
         #print(">> Result", qmCert);
         #print(">> Is correct?", checkCorrectnessQM(qmCert, f));

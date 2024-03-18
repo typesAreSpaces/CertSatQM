@@ -121,11 +121,15 @@ $endif
         end if;
     end proc;
 
+# ---------------------------------------------------
+#) Algorithms from Section 3
+
 local auxiliarSosStep;
+
 export zeroPO, unitPO, updatePONatEntry;
 export addPO, prodPO,  scalarProdPO;
 
-export semiAlgebraicIntervals;
+local semiAlgebraicIntervals;
 local ord;
 local decompositionFromBasis;
 
@@ -136,7 +140,7 @@ local natGens;
 local checkSosMultipliers;
 local checkCorrectnessPO;
 
-export inductiveCert;
+export certInPO;
 
 # products of the form (x-a), -(x-b), a \leq b
 local case_3_1;
@@ -157,13 +161,15 @@ local lemma_3_4;
 # products of the form (x-a)(x-b), (x-c)(x-d), a < b < c
 local case_3_5;
 
-export cases;
+local cases;
 
 export zeroQM, unitQM, updateQMNatEntry;
 export addQM, prodQM, negQM, scalarProdQM;
 
 export fromQMtoPoly, showQM;
-export split_basis_PO, liftPO2QM, checkCorrectnessQM;
+local  splitPO2QM;
+export certInQM, checkCorrectnessQM;
+# ---------------------------------------------------
 
     auxiliarSosStep := proc(sos, _basis_element, x)
         if sos = 1 then
@@ -405,7 +411,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     end proc;
 
     # Assumption: SemiAlgebraic(basis) is bounded and non-empty
-    inductiveCert := proc(f, basis, x)
+    certInPO := proc(f, basis, x)
         if checkMembership(f, basis, x) = false then
             return 0, 0;
         end if;
@@ -1058,7 +1064,7 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     # Input:
     # nat is the natural generator basis
     # encoded as a list of polynomials
-    split_basis_PO := proc(basis_element, nat);
+    splitPO2QM := proc(basis_element, nat);
     local i, elem;
     local todo := map(
         _index -> [expand(mul(elem, elem in map(i -> nat[i], _index))), _index],
@@ -1076,25 +1082,25 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     # Input:
     # nat is the natural generator basis
     # encoded as a list of polynomials
-    liftPO2QM := proc(f, nat, a_0, b_k, x)
+    certInQM := proc(f, nat, a_0, b_k, x)
     local factorable_sos, certPO, basis, _basis;
     local st;
-        factorable_sos, certPO := inductiveCert(f, nat, x);
+        factorable_sos, certPO := certInPO(f, nat, x);
     local output := zeroQM(nat), _temp1, _temp2;
         #print(">> factorable_sos", factorable_sos);
         for basis in [indices(certPO, 'nolist')] do
             if evalb(certPO[basis] = 0) = false then
-                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> basis@liftPO2QM", basis));
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> basis@certInQM", basis));
                 _temp1 := unitQM(nat);
-                for _basis in split_basis_PO(basis, nat) do
-                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _basis@liftPO2QM", nat[_basis]));
+                for _basis in splitPO2QM(basis, nat) do
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _basis@certInQM", nat[_basis]));
                     _temp2 := zeroQM(nat);
                     updateQMNatEntry(_temp2, nat[_basis], 1);
                     st := time();
-                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 1 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
-                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 2 one step within _basis@liftPO2QM", fromQMtoPoly(_temp2)));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 1 one step within _basis@certInQM", fromQMtoPoly(_temp1)));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 2 one step within _basis@certInQM", fromQMtoPoly(_temp2)));
                     _temp1 := prodQM(_temp1, _temp2, a_0, b_k, nat, x);
-                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 3 one step within _basis@liftPO2QM", fromQMtoPoly(_temp1)));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Done 3 one step within _basis@certInQM", fromQMtoPoly(_temp1)));
                     DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">>"));
                 end do;
                 _temp1 := scalarProdQM(_temp1, certPO[basis], nat, x);
@@ -1130,4 +1136,38 @@ export split_basis_PO, liftPO2QM, checkCorrectnessQM;
     checkCorrectnessQM := proc(p, f)
         return evalb(0 = expand(f - fromQMtoPoly(p)));
     end proc;
+
+# ------------------------------------------------------------------
+#) Algorithms from Section 4.1
+# Compute certificates of natural generators in terms of split basis
+
+export splitPoly;
+export splitBasis;
+export lemma_4_7;
+
+    splitPoly := proc(poly, nat, x)
+        return [poly];
+    end proc;
+
+    splitBasis := proc(basis, nat, x)
+    local i;
+    local output := [];
+        for i from 1 to nops(basis) do
+            output := [op(output), op(splitPoly(basis[i], nat, x))];
+        end do;
+        return output;
+    end proc;
+
+    lemma_4_7 := proc(nat_gen, x)
+        return nat_gen;
+    end proc;
+
+# ------------------------------------------------------------------
+
+# --------------------------------------------------------------
+#) Algorithms from Section 4.2
+# Compute certificates of split basis in terms of original basis
+
+
+# --------------------------------------------------------------
 end module;

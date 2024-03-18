@@ -27,7 +27,7 @@ test := proc()
         b_k := nat_S[nops(nat_S), 2];
 
         st := time();
-        qmCert := liftPO2QM(arch_poly, nat, a_0, b_k, x);
+        qmCert := certInQM(arch_poly, nat, a_0, b_k, x);
         #print(">> Result", qmCert);
         print(">> Is correct?", checkCorrectnessQM(qmCert, arch_poly));
         print(">> Time CertSatQM", time() - st);
@@ -39,7 +39,7 @@ test := proc()
         #lprint(">> f", f);
 
         #st := time();
-        #qmCert := liftPO2QM(f, nat, a_0, b_k, x);
+        #qmCert := certInQM(f, nat, a_0, b_k, x);
         #print(">> Time CertSatQM", time() - st);
         ##print(">> Result", qmCert);
         ##print(">> Is correct?", checkCorrectnessQM(qmCert, f));
@@ -49,7 +49,7 @@ end proc;
 
 test2 := proc()
     f := 16-x^2;
-    qmCert := liftPO2QM(f, [x-1, (x-2)*(x-3), -(x-4)], 1, 4, x);
+    qmCert := certInQM(f, [x-1, (x-2)*(x-3), -(x-4)], 1, 4, x);
     print(">> Result", qmCert);
     print(">> Is correct?", checkCorrectnessQM(qmCert, f));
 end proc;

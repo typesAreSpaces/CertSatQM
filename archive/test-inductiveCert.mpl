@@ -4,13 +4,13 @@ with(CertSatQM);
 #printlevel := 8;
 
 inductiveTest := proc(nat, f)
-local test := inductiveCert(f, nat, x);
+local test := certInPO(f, nat, x);
     print(test);
     return;
 end proc;
 
 testPO := proc(f, nat)
-local factorable_sos, certPO := inductiveCert(f, nat, x);
+local factorable_sos, certPO := certInPO(f, nat, x);
 local basis;
     print(">> factorable_sos", factorable_sos);
     for basis in [indices(certPO, 'nolist')] do
