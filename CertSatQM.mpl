@@ -9,12 +9,16 @@ $define START_LOG_TIME(X, S) stack_level:=stack_level+1;fd := FileTools:-Text:-O
 $define END_LOG_TIME(X, S) fd := FileTools:-Text:-Open("log_time.txt", append);FileTools:-Text:-WriteString(fd, cat("End: ", X, " ", convert(stack_level, string), "\nTime: ", convert(time() - _log_time_S, string), "\n"));FileTools:-Text:-Close(fd);stack_level:=stack_level-1;
 $define INIT_START_LOG_TIME(X, S) local fd;START_LOG_TIME(X, S)
 
+#StrictlyPositiveCert:-spCertificates := proc(f, basis, x)
+$define spCert StrictlyPositiveCert:-spCertificates
+#BasicLemma:-lift := proc(f, g, basis, x)
+$define basiclemma BasicLemma:-lift
+$define _isolate RootFinding:-Isolate
+
 with(combinat, powerset);
 with(SolveTools, SemiAlgebraic);
 with(RegularChains, SemiAlgebraicSetTools, PolynomialRing);
 with(SemiAlgebraicSetTools, IsEmpty);
-with(BasicLemma, lift);
-with(StrictlyPositiveCert, spCertificates);
 
 #_pwd := currentdir();
 #currentdir(homedir);
@@ -24,6 +28,8 @@ with(StrictlyPositiveCert, spCertificates);
 #read "univsos/univsos2.mm";
 #read "univsos/univsos3.mm";
 
+#read "multivsos/multivsos.mm";
+
 #currentdir(_pwd);
 
 CertSatQM := module() option package;
@@ -32,7 +38,71 @@ $ifdef LOG_TIME
 local stack_level := -1;
 $endif
 
+local computeMin;
 local sqf, bound_info;
+
+# Compute minimum of polynomial poly
+# over semialgebraic set S
+# S is a finite list of intervals
+# poly is a polynomial
+    computeMin := proc(S, poly, x)
+$ifdef LOG_TIME
+        INIT_START_LOG_TIME("computeMin",0)
+$endif
+        if evalb(S = []) then
+$ifdef LOG_TIME
+            END_LOG_TIME("computeMin",0)
+$endif
+            return 0, infinity;
+        end if;
+    local roots_poly := map(sol -> op(sol)[2], _isolate(diff(poly, x)));
+    local num_roots := nops(roots_poly);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> poly", poly));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> roots_poly", roots_poly));
+    local curr_point;
+    local curr_min := infinity, arg_min;
+    local i, j := 1;
+    local interval;
+        for i from 1 to nops(S) do
+            interval := bound_info(x, S[i], 0);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Current interval", interval));
+
+            curr_point := subs(x=interval[1], poly);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_point", curr_point));
+            if evalf(curr_point <= curr_min) then
+                curr_min := curr_point;
+                arg_min := interval[1];
+            end if;
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_min", curr_min));
+
+            curr_point := subs(x=interval[2], poly);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_point", curr_point));
+            if evalf(curr_point <= curr_min) then
+                curr_min := curr_point;
+                arg_min := interval[2];
+            end if;
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_min", curr_min));
+
+            while j <= num_roots and evalf(roots_poly[j] < interval[1]) do
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> j @1", j));
+                j := j + 1;
+            end do;
+
+            while j <= num_roots and evalf(roots_poly[j] < interval[2]) do
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> j @2", j));
+                curr_point := subs(x=roots_poly[j], poly);
+                if evalf(curr_point <= curr_min) then
+                    curr_min := curr_point;
+                    arg_min := roots_poly[j];
+                end if;
+                j := j + 1;
+            end do;
+        end do;
+$ifdef LOG_TIME
+        END_LOG_TIME("computeMin",0)
+$endif
+        return arg_min, curr_min;
+    end proc;
 
     sqf := proc(poly)
     local L, h, f_u, i;
@@ -129,13 +199,13 @@ local auxiliarSosStep;
 export zeroPO, unitPO, updatePONatEntry;
 export addPO, prodPO,  scalarProdPO;
 
-local semiAlgebraicIntervals;
-local ord;
+export semiAlgebraicIntervals;
+local ord, epsSign;
 local decompositionFromBasis;
 
 local checkMembership;
 local lemma_1_5;
-local natGens;
+export natGens;
 
 local checkSosMultipliers;
 local checkCorrectnessPO;
@@ -285,6 +355,12 @@ export certInQM, checkCorrectnessQM;
     local g, T;
         g := subs(x = T + _point, f);
         return ldegree(expand(g), T);
+    end proc;
+
+    epsSign := proc(f, t, point)
+    local g, T;
+        g := subs(t = T + point, f);
+        return tcoeff(expand(g), T);
     end proc;
 
     # Assumption:
@@ -1141,33 +1217,408 @@ export certInQM, checkCorrectnessQM;
 #) Algorithms from Section 4.1
 # Compute certificates of natural generators in terms of split basis
 
-export splitPoly;
-export splitBasis;
-export lemma_4_7;
+export isBounded;
 
-    splitPoly := proc(poly, nat, x)
-        return [poly];
+    isBounded := proc(f, x)
+        return type(degree(f, x), even) and lcoeff(f) < 0;
     end proc;
 
-    splitBasis := proc(basis, nat, x)
-    local i;
-    local output := [];
-        for i from 1 to nops(basis) do
-            output := [op(output), op(splitPoly(basis[i], nat, x))];
+export hasOrd1;
+
+# If check = 1 then it checks for positive sign
+# If check = -1 then it checks for negative sign
+    hasOrd1 := proc(f, point, x, check)
+    local pderiv := diff(f, x);
+        return subs(x=point, f) = 0 and subs(x=point, check*pderiv) > 0;
+    end proc;
+
+export extractInbetweenSplitFactors;
+
+    extractInbetweenSplitFactors := proc(poly_list, point_a, point_b, x)
+        # Assume f = (x - a)*f1
+    local f := poly_list[1];
+    local roots_f := select(
+        _root -> point_a < _root and _root <= point_b and epsSign(f, x, _root) > 0,
+        [RealDomain:-solve](f = 0, x));
+    local ords_f := map(_root -> ord(f, x, _root), roots_f);
+    local size_f := nops(roots_f);
+
+        # Assume g = (x - b)*g1
+    local g := poly_list[2];
+    local roots_g := select(
+        _root -> point_a <= _root and _root < point_b and epsSign(g, x, _root) < 0,
+        [RealDomain:-solve](g = 0, x));
+    local ords_g := map(_root -> ord(g, x, _root), roots_g);
+    local size_g := nops(roots_g);
+
+    local i, j, i_, j_, min_deg := infinity, curr_deg;
+        for i from 1 to size_f do
+            for j from 1 to size_g do
+                curr_deg := max(ords_g[j], ords_f[i]);
+                if roots_g[j] < roots_f[i] and curr_deg < min_deg  then
+                    min_deg := curr_deg;
+                    i_ := i;
+                    j_ := j;
+                end if;
+            end do;
+        end do;
+
+        return [
+            [roots_f[i_], ords_f[i_]],
+            [roots_g[j_], ords_g[j_]]
+               ];
+    end proc;
+
+export scalarprodCerts;
+export addCerts;
+export dot_product;
+
+    scalarprodCerts := proc(scalar, certs)
+        return map(_poly -> scalar*_poly, certs);
+    end proc;
+
+    addCerts := proc(cert1, cert2)
+        return map[indices](i -> cert1[i] + cert2[i], cert1);
+    end proc;
+
+    dot_product := proc(v1, v2)
+    local output := 0, i;
+        for i from 1 to nops(v1) do
+            output := output + v1[i]*v2[i];
         end do;
         return output;
     end proc;
 
-    lemma_4_7 := proc(nat_gen, x)
-        return nat_gen;
+export splitBasis;
+export lemma_4_7;
+
+    splitBasis := proc(basis, semialg_nat, x)
+
+    local poly_roots := map(poly -> [RealDomain:-solve](poly = 0, x), basis);
+    local num_poly_roots := map(poly_root -> nops(poly_root), poly_roots);
+    local output := [];
+    local num_intervals := nops(semialg_nat);
+    local num_gens := nops(basis);
+
+    local i, j;
+    local min_bounded_deg, min_unbounded_deg;
+    local curr_deg;
+    local curr_poly1, curr_poly2, poly2_flag;
+
+        min_bounded_deg := infinity;
+        min_unbounded_deg := infinity;
+
+        # Left
+        for i from 1 to num_gens do
+            if hasOrd1(basis[i], semialg_nat[1][1], x, 1) then
+                curr_deg := degree(basis[i], x);
+                if isBounded(basis[i], x) then
+                    if curr_deg < min_bounded_deg then
+                        min_bounded_deg := curr_deg;
+                        curr_poly1 := basis[i];
+                    end if;
+                else
+                    if min_bounded_deg = infinity
+                    and curr_deg < min_unbounded_deg then
+                        min_unbounded_deg := curr_deg;
+                        curr_poly1 := basis[i];
+                    end if;
+                end if;
+            end if;
+        end do;
+        output := [op(output), [curr_poly1]];
+
+        # In-between
+        for i from 1 to nops(semialg_nat)-1 do
+            # Dealing with (semialg_nat[i][2], semialg_nat[i+1][1])
+
+            poly2_flag := false;
+            min_bounded_deg := infinity;
+            min_unbounded_deg := infinity;
+
+            # Find f_i \in basis such that f = (x-semialg_nat[i][2])*g
+            for j from 1 to num_gens do
+                if hasOrd1(basis[j], semialg_nat[i][2], x, -1) then
+                    curr_deg := degree(basis[j], x);
+                    # Keep f_i if f = (x-semialg_nat[i][2])*(x-semialg_nat[i][1])*g
+                    if hasOrd1(basis[j], semialg_nat[i+1][1], x, 1) then
+                        if isBounded(basis[j], x) then
+                            if curr_deg < min_bounded_deg then
+                                min_bounded_deg := curr_deg;
+                                curr_poly1 := basis[j];
+                                poly2_flag := true;
+                            end if;
+                        else
+                            if min_bounded_deg = infinity
+                            and curr_deg < min_unbouded_deg then
+                                min_unbounded_deg := curr_deg;
+                                curr_poly1 := basis[j];
+                                poly2_flag := true;
+                            end if;
+                        end if;
+                    else
+                        if not(poly2_flag)
+                        and isBounded(basis[j], x) then
+                            if curr_deg < min_bounded_deg then
+                                min_bounded_deg := curr_deg;
+                                curr_poly1 := basis[j];
+                            end if;
+                        else
+                            if not(poly2_flag)
+                            and min_bounded_deg = infinity
+                            and curr_deg < min_unbounded_deg then
+                                min_unbounded_deg := curr_deg;
+                                curr_poly1 := basis[j];
+                            end if;
+                        end if;
+                    end if;
+                end if;
+            end do;
+
+            min_bounded_deg := infinity;
+            min_unbounded_deg := infinity;
+
+            if poly2_flag then
+                output := [op(output), [curr_poly1, curr_poly1]];
+            else
+                for j from 1 to num_gens do
+                    if hasOrd1(basis[j], semialg_nat[i+1][1], x, 1) then
+                        curr_deg := degree(basis[j], x);
+                        if isBounded(basis[j], x) then
+                            if curr_deg < min_bounded_deg then
+                                min_bounded_deg := curr_deg;
+                                curr_poly2 := basis[j];
+                            end if;
+                        else
+                            if min_bounded_deg = infinity
+                            and curr_deg < min_unbounded_deg then
+                                min_unbounded_deg := curr_deg;
+                                curr_poly2 := basis[j];
+                            end if;
+                        end if;
+                    end if;
+                end do;
+                output := [op(output), [curr_poly1, curr_poly2]];
+            end if;
+        end do;
+
+        min_bounded_deg := infinity;
+        min_unbounded_deg := infinity;
+
+        # Right
+        for i from 1 to num_gens do
+            if hasOrd1(basis[i], semialg_nat[num_intervals][2], x, -1) then
+                curr_deg := degree(basis[i], x);
+                if isBounded(basis[i], x) then
+                    if curr_deg < min_bounded_deg then
+                        min_bounded_deg := curr_deg;
+                        curr_poly1 := basis[i];
+                    end if;
+                else
+                    if min_bounded_deg = infinity
+                    and curr_deg < min_unbounded_deg then
+                        min_unbounded_deg := curr_deg;
+                        curr_poly1 := basis[i];
+                    end if;
+                end if;
+            end if;
+        end do;
+        output := [op(output), [curr_poly1]];
+
+        return output;
     end proc;
 
+    # This follows the notation in
+    # proof of Lemma 4.7
+    lemma_4_7 := proc(G_fix, a0, a, b, bl, x)
+        # i) Find polynomial q...
+    local g_nat := (x - a)*(x - b);
+    local c_2 := G_fix[1][1];
+    local c_1 := G_fix[2][1];
+    local m_2 := G_fix[1][2];
+    local m_1 := G_fix[2][2];
+    local m := max(m_1, m_2);
+    local _m := min(m_1, m_2);
+    local alpha2 := 1, alpha3 := 1;
+
+        if m_1 < m_2 then
+            alpha2 := (x  - c_2)^(m-_m);
+        end if;
+
+        if m_2 < m_1 then
+            alpha3 := (x  - c_1)^(m-_m);
+        end if;
+
+        alpha2 := 1/((a-b)*(a - c_2)^m)*alpha2;
+        alpha3 := 1/((b-a)*(b - c_1)^m)*alpha3;
+
+    local q2 := quo(alpha2*(x-b)*(x-c_2)^m + alpha3*(x-a)*(x-c_1)^m, (x-a)*(x-b), x);
+    local alpha1 := 1/1000;
+    local q3 := alpha1*(bl - a0) + q2;
+        #local q_cert := [0, alpha1*(x-a)^2*(x-b)^2, alpha2*(x-b)^2, alpha3*(x-a)^2, alpha1*(x-a)^2*(x-b)^2];
+    local q_cert := [0, alpha1*(x-a)^2*(x-b)^2, alpha2*(x-b)^2, alpha3*(x-a)^2, alpha1*(x-a)^2*(x-b)^2, 0];
+        #local Gfix := [x-a0, (x-a)*(x-c_2)^m_2, (x-c_1)^m_1*(x-b), -(x-bl)];
+        # TODO Add certificate of -(x-a0)*(x-bl)
+    local Gfix := [x-a0, (x-a)*(x-c_2)^m_2, (x-c_1)^m_1*(x-b), -(x-bl), -(x-a0)*(x-bl)];
+
+        # ii) Using q and Theorem 4.3, compute...
+    local sigma, tau;
+        sigma, tau := basiclemma(g_nat, q3*g_nat + 1, Gfix, x);
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Gfix", Gfix));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma", sigma));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau", tau));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be 1", expand(sigma*g_nat + tau*(q3*g_nat + 1))));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), sigma <= 0], [x])));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), tau <= 0], [x])));
+
+        # iii) Compute certificates for...
+    local sigma_cert := spCert(sigma, Gfix, x);
+    local tau_cert := spCert(tau, Gfix, x);
+    local sigma_tau_cert := spCert(sigma*tau, Gfix, x);
+
+        # iv) Using the previous two steps, compute...
+    local tau_g_nat_cert := addCerts(
+        scalarprodCerts(g_nat^2, sigma_tau_cert),
+        scalarprodCerts(tau^2, q_cert));
+
+        return addCerts(
+            scalarprodCerts(g_nat^2, sigma_cert),
+            addCerts(
+                scalarprodCerts(g_nat^2*q3, tau_cert),
+                tau_g_nat_cert));
+    end proc;
 # ------------------------------------------------------------------
 
 # --------------------------------------------------------------
 #) Algorithms from Section 4.2
 # Compute certificates of split basis in terms of original basis
 
+export findDeg1Complement;
+export findDeg2Complement;
+
+    # Returns sigma, tau, h
+    # such that:
+    # *) sigma, tau \in \sum{\mathbb{R}[x]}^2
+    # *) sigma gen + tau h = 1
+    # *) tau = \pm (x - \alpha) with \alpha \in \mathbb{R}
+    findDeg1Complement := proc(f, bound, x);
+    local roots_f := RealDomain:-solve(f = 0, x);
+        #local eps1 := -computeMin([[min(roots_f) <= x, x <= max(roots_f)]], f, x)[2];
+    local eps1 := -minimize(f, x= min(roots_f) .. max(roots_f));
+        # There should be only one real root of eps1 - f
+    local alpha := RealDomain:-solve(eps1 - f = 0, x);
+    local beta, _sign;
+        if lcoeff(f) > 0 then
+            beta := max(ceil(alpha), bound);
+            _sign := -1;
+        else
+            beta := min(floor(alpha), bound);
+            _sign := 1;
+        end if;
+    local eps2 := -eps1 + subs(x = beta, f);
+    local sigma := 1/(eps2 + eps1);
+    local h := _sign*(x-beta);
+        return sigma, sigma*(quo(eps2 + eps1 - f, h, x)), h;
+    end proc;
+
+    findDeg2Complement := proc(f, lower_bound, upper_bound, x);
+    local roots_f := RealDomain:-solve(f = 0, x);
+        #local eps1 := -computeMin([[min(roots_f) <= x, x <= max(roots_f)]], f, x)[2];
+    local eps1 := -minimize(f, x= min(roots_f) .. max(roots_f));
+    local eps2 := max(0, -eps1 + subs(x = lower_bound, f), -eps1 + subs(x = upper_bound, f));
+    local sigma := 1/(eps2 + eps1);
+    local alpha := RealDomain:-solve(eps2 + eps1 - f = 0, x);
+        # There should be only two real roots of eps1 - f
+    local h := -(x-alpha[1])*(x-alpha[2]);
+        return sigma, sigma*(quo(eps2 + eps1 - f, h, x)), h;
+    end proc;
+
+export splitBoundedCert;
+export splitUnboundedCertOneSide;
+export splitUnboundedCertBothSides;
+export splitUnboundedCert;
+
+    splitBoundedCert := proc(t1, gen, x)
+    local t2 := quo(gen, t1, x);
+    local sigma, tau;
+    local G := [gen];
+        sigma, tau := basiclemma(t1, t2, [gen], x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma", sigma));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau", tau));
+
+    local sigma_cert := spCert(sigma, G, x);
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_cert", sigma_cert));
+    local tau_cert := spCert(tau, G, x);
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_cert", tau_cert));
+    local tau_gen_cert := [tau_cert[2]*gen^2, tau_cert[1]];
+
+        return addCerts(scalarprodCerts(t1^2, sigma_cert), tau_gen_cert);
+    end proc;
+
+    splitUnboundedCertOneSide := proc(gen, basis, bl, x)
+
+    local i, gen_cert := map(0, basis);
+        for i from 1 to nops(basis) do
+            if expand(gen-basis[i]) = 0 then
+                gen_cert[i] := 1;
+                break;
+            end if;
+        end do;
+        gen_cert := [0, op(gen_cert)];
+
+    local sigma_2, tau_2, h;
+        sigma_2, tau_2, h := findDeg1Complement(gen, bl, x);
+
+    local h_cert := spCert(h, basis, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_cert", h_cert));
+
+        return h, addCerts(
+            scalarprodCerts(sigma_2*gen^2, h_cert),
+            scalarprodCerts(tau_2*h^2, gen_cert));
+    end proc;
+
+    splitUnboundedCertBothSides := proc(gen, basis, a0, bl, x)
+    local i, gen_cert := map(0, basis);
+        for i from 1 to nops(basis) do
+            if expand(gen-basis[i]) = 0 then
+                gen_cert[i] := 1;
+                break;
+            end if;
+        end do;
+        gen_cert := [0, op(gen_cert)];
+
+    local sigma_2, tau_2, h;
+        sigma_2, tau_2, h := findDeg2Complement(gen, a0, bl, x);
+
+    local h_cert := spCert(h, basis, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_cert", h_cert));
+
+        return h, addCerts(
+            scalarprodCerts(sigma_2*gen^2, h_cert),
+            scalarprodCerts(tau_2*h^2, gen_cert));
+    end proc;
+
+    splitUnboundedCert := proc(t1, gen, basis, a0, bl, x)
+
+    local _coeff := lcoeff(gen);
+    local _deg := degree(gen, x);
+    local h, gen_h_cert;
+
+        if type(_deg, odd) then
+            if lcoeff(gen) > 0 then
+                h, gen_h_cert := splitUnboundedCertOneSide(gen, basis, bl + 10, x);
+            else
+                h, gen_h_cert := splitUnboundedCertOneSide(gen, basis, a0 - 10, x);
+            end if;
+        else
+            h, gen_h_cert := splitUnboundedCertBothSides(gen, basis, a0 - 10, bl + 10, x);
+        end if;
+
+    local t1_cert_in_gen_h := splitBoundedCert(t1, gen*h, x);
+    local output_cert := scalarprodCerts(t1_cert_in_gen_h[2], gen_h_cert);
+        output_cert[1] := output_cert[1] + t1_cert_in_gen_h[1];
+        return output_cert;
+    end proc;
 
 # --------------------------------------------------------------
 end module;

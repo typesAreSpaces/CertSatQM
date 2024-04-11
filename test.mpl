@@ -1,28 +1,27 @@
 restart;
 
-with(CertSatQM):
-
-check := proc(f, nat, a, b, x)
-    qmCert := certInQM(f, nat, a, b, x);
-#print(qmCert);
-    print(checkCorrectnessQM(qmCert, f));
-#print(simplify(fromQMtoPoly(qmCert)));
-end proc;
+with(CertSatQM);
 
 #printlevel := -1;
 #printlevel := 5;
 
-nat := [x+6, (x+4)*(x+2), x*(x-2), -(x-4)];
-f1 := -x*(x-2)*(x-4);
-f2 := -(x+4)*(x+2)*(x-4);
-f3 := (x+4)*(x+2)*x*(x-2);
-f4 := (x+4)*(x+2)*x*(x-2)*(-(x-4));
-f5 := (x+6)*(x+4)*(x+2)*x*(x-2)*(-(x-4));
-f6 := (x+6)*(x+4)*(x+2)*x*(x-2)*(-(x-5));
+basis := [(x+3)*(x+2)*(x-1), -(x+1)*(x-2)*(x-3)];
+#basis := [x+3, (x+2)*(x-1), (x+1)*(x-2), -x+3];
+ 
+semialg_nat := semiAlgebraicIntervals(basis, x);
+nat := natGens(semialg_nat, x);
 
-check(f1, nat, -6, 4, x);
-check(f2, nat, -6, 4, x);
-check(f3, nat, -6, 4, x);
-check(f4, nat, -6, 4, x);
-check(f5, nat, -6, 4, x);
-check(f6, nat, -6, 4, x);
+split_basis := splitBasis(basis, semialg_nat, x);
+todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
+
+#splitBoundedCert := proc(split_gen, gen, x)
+#ok := splitBoundedCert(x+3, -(x+3)*(x-3), x);
+#lprint(expand(ok[1]*1 + ok[2]*(-(x+3)*(x-3))));
+
+#splitUnboundedCert := proc(t1, gen, basis, a0, bl, x);
+
+#ok1 := splitUnboundedCert(x+3, (x+3)*(x+2)*(x-1), basis, -3, 3, x);
+#lprint(ok1);
+
+ok2 := splitUnboundedCert((x+3)*(x+2), (x+3)*(x+2)*(x-2)*(x-3), basis, -3, 3, x);
+lprint(">> ok2", ok2);
