@@ -1217,13 +1217,13 @@ export certInQM, checkCorrectnessQM;
 #) Algorithms from Section 4.1
 # Compute certificates of natural generators in terms of split basis
 
-export isBounded;
+local isBounded;
+local hasOrd1;
+local extractInbetweenSplitFactors;
 
     isBounded := proc(f, x)
         return type(degree(f, x), even) and lcoeff(f) < 0;
     end proc;
-
-export hasOrd1;
 
 # If check = 1 then it checks for positive sign
 # If check = -1 then it checks for negative sign
@@ -1231,8 +1231,6 @@ export hasOrd1;
     local pderiv := diff(f, x);
         return subs(x=point, f) = 0 and subs(x=point, check*pderiv) > 0;
     end proc;
-
-export extractInbetweenSplitFactors;
 
     extractInbetweenSplitFactors := proc(poly_list, point_a, point_b, x)
         # Assume f = (x - a)*f1
@@ -1269,9 +1267,9 @@ export extractInbetweenSplitFactors;
                ];
     end proc;
 
-export scalarprodCerts;
-export addCerts;
-export dot_product;
+local scalarprodCerts;
+local addCerts;
+local dot_product;
 
     scalarprodCerts := proc(scalar, certs)
         return map(_poly -> scalar*_poly, certs);
@@ -1493,8 +1491,8 @@ export lemma_4_7;
 #) Algorithms from Section 4.2
 # Compute certificates of split basis in terms of original basis
 
-export findDeg1Complement;
-export findDeg2Complement;
+local findDeg1Complement;
+local findDeg2Complement;
 
     # Returns sigma, tau, h
     # such that:
@@ -1604,6 +1602,8 @@ export splitUnboundedCert;
     local _deg := degree(gen, x);
     local h, gen_h_cert;
 
+        # TODO Investigate optimal lowerbound/upperbound 
+        # for this block
         if type(_deg, odd) then
             if lcoeff(gen) > 0 then
                 h, gen_h_cert := splitUnboundedCertOneSide(gen, basis, bl + 10, x);
@@ -1619,6 +1619,6 @@ export splitUnboundedCert;
         output_cert[1] := output_cert[1] + t1_cert_in_gen_h[1];
         return output_cert;
     end proc;
-
 # --------------------------------------------------------------
+
 end module;
