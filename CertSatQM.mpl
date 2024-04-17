@@ -1,5 +1,8 @@
 $define ENABLE_DEBUGGING    false
 $define ENABLE_VERIFICATION false
+
+$define ENABLE_VERIFICATION_LEMMA_4_7 false
+
 $define LOG_TIME
 
 $define DEBUG_EXIT lprint(">> Debugging, getting out"); return 0
@@ -11,6 +14,7 @@ $define INIT_START_LOG_TIME(X, S) local fd;START_LOG_TIME(X, S)
 
 #StrictlyPositiveCert:-spCertificates := proc(f, basis, x)
 $define spCert StrictlyPositiveCert:-spCertificates
+
 #BasicLemma:-lift := proc(f, g, basis, x)
 $define basiclemma BasicLemma:-lift
 $define _isolate RootFinding:-Isolate
@@ -38,8 +42,13 @@ $ifdef LOG_TIME
 local stack_level := -1;
 $endif
 
+# --------------------------------------------------------------
+#) Algorithms from `Utility`
+
+# --------------------
 local computeMin;
 local sqf, bound_info;
+# --------------------
 
 # Compute minimum of polynomial poly
 # over semialgebraic set S
@@ -67,7 +76,7 @@ $endif
             interval := bound_info(x, S[i], 0);
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Current interval", interval));
 
-            curr_point := subs(x=interval[1], poly);
+            curr_point := subs(x =interval[1], poly);
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_point", curr_point));
             if evalf(curr_point <= curr_min) then
                 curr_min := curr_point;
@@ -75,7 +84,7 @@ $endif
             end if;
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_min", curr_min));
 
-            curr_point := subs(x=interval[2], poly);
+            curr_point := subs(x =interval[2], poly);
             DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> curr_point", curr_point));
             if evalf(curr_point <= curr_min) then
                 curr_min := curr_point;
@@ -90,7 +99,7 @@ $endif
 
             while j <= num_roots and evalf(roots_poly[j] < interval[2]) do
                 DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> j @2", j));
-                curr_point := subs(x=roots_poly[j], poly);
+                curr_point := subs(x =roots_poly[j], poly);
                 if evalf(curr_point <= curr_min) then
                     curr_min := curr_point;
                     arg_min := roots_poly[j];
@@ -190,10 +199,12 @@ $endif
             end if;
         end if;
     end proc;
+# --------------------------------------------------------------
 
 # ---------------------------------------------------
-#) Algorithms from Section 3
+#) Algorithms from `Section 3`
 
+# ----------------------------------------
 local auxiliarSosStep;
 
 export zeroPO, unitPO, updatePONatEntry;
@@ -239,7 +250,7 @@ export addQM, prodQM, negQM, scalarProdQM;
 export fromQMtoPoly, showQM;
 local  splitPO2QM;
 export certInQM, checkCorrectnessQM;
-# ---------------------------------------------------
+# ----------------------------------------
 
     auxiliarSosStep := proc(sos, _basis_element, x)
         if sos = 1 then
@@ -1214,12 +1225,47 @@ export certInQM, checkCorrectnessQM;
     end proc;
 
 # ------------------------------------------------------------------
-#) Algorithms from Section 4.1
+#) Algorithms from `Section 4.1`
 # Compute certificates of natural generators in terms of split basis
+
+# ---------------------------------
+export extractSOSFactors;
 
 local isBounded;
 local hasOrd1;
-local extractInbetweenSplitFactors;
+export extractInbetweenSplitFactors;
+
+local scalarprodCerts;
+local addCerts;
+local dot_product;
+
+export splitBasis;
+export lemma_4_7;
+# ---------------------------------
+
+    extractSOSFactors := proc(f, x);
+
+    local sqrfree_f := sqrfree(f, x);
+    local i;
+    local _poly, _multiplicity;
+    local sos := 1, rest := op(sqrfree_f)[1], todo := op(sqrfree_f)[2];
+
+        for i from 1 to nops(todo) do
+            _poly := todo[i][1];
+            _multiplicity := todo[i][2];
+            if type(_multiplicity, even) then
+                sos := sos*(_poly)^_multiplicity;
+            else
+                if evalb(SemiAlgebraic([_poly < 0], [x]) = []) then
+                    sos := sos*(_poly)^_multiplicity;
+                else
+                    rest := rest*(_poly)^_multiplicity;
+                end if;
+            end if;
+        end do;
+
+        return sos, rest;
+    end proc;
 
     isBounded := proc(f, x)
         return type(degree(f, x), even) and lcoeff(f) < 0;
@@ -1267,10 +1313,6 @@ local extractInbetweenSplitFactors;
                ];
     end proc;
 
-local scalarprodCerts;
-local addCerts;
-local dot_product;
-
     scalarprodCerts := proc(scalar, certs)
         return map(_poly -> scalar*_poly, certs);
     end proc;
@@ -1286,9 +1328,6 @@ local dot_product;
         end do;
         return output;
     end proc;
-
-export splitBasis;
-export lemma_4_7;
 
     splitBasis := proc(basis, semialg_nat, x)
 
@@ -1462,12 +1501,14 @@ export lemma_4_7;
         # ii) Using q and Theorem 4.3, compute...
     local sigma, tau;
         sigma, tau := basiclemma(g_nat, q3*g_nat + 1, Gfix, x);
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Gfix", Gfix));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma", sigma));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau", tau));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be 1", expand(sigma*g_nat + tau*(q3*g_nat + 1))));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), sigma <= 0], [x])));
-        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), tau <= 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> arg 1", g_nat));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> arg 2", q3*g_nat + 1));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Gfix", Gfix));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma", sigma));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau", tau));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION_LEMMA_4_7, lprint(">> this should be 1", expand(sigma*g_nat + tau*(q3*g_nat + 1))));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION_LEMMA_4_7, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), sigma <= 0], [x])));
+        DEBUG(__FILE__, __LINE__, ENABLE_VERIFICATION_LEMMA_4_7, lprint(">> this should be []", SemiAlgebraic([op(map(_poly -> _poly >= 0, Gfix)), tau <= 0], [x])));
 
         # iii) Compute certificates for...
     local sigma_cert := spCert(sigma, Gfix, x);
@@ -1485,14 +1526,21 @@ export lemma_4_7;
                 scalarprodCerts(g_nat^2*q3, tau_cert),
                 tau_g_nat_cert));
     end proc;
-# ------------------------------------------------------------------
+# ---------------------------------------------------
 
 # --------------------------------------------------------------
-#) Algorithms from Section 4.2
+#) Algorithms from `Section 4.2`
 # Compute certificates of split basis in terms of original basis
 
+# ---------------------------------
 local findDeg1Complement;
 local findDeg2Complement;
+
+export splitBoundedCert;
+export splitUnboundedCertOneSide;
+export splitUnboundedCertBothSides;
+export splitUnboundedCert;
+# ---------------------------------
 
     # Returns sigma, tau, h
     # such that:
@@ -1502,7 +1550,7 @@ local findDeg2Complement;
     findDeg1Complement := proc(f, bound, x);
     local roots_f := RealDomain:-solve(f = 0, x);
         #local eps1 := -computeMin([[min(roots_f) <= x, x <= max(roots_f)]], f, x)[2];
-    local eps1 := -minimize(f, x= min(roots_f) .. max(roots_f));
+    local eps1 := -minimize(f, x = min(roots_f) .. max(roots_f));
         # There should be only one real root of eps1 - f
     local alpha := RealDomain:-solve(eps1 - f = 0, x);
     local beta, _sign;
@@ -1516,38 +1564,43 @@ local findDeg2Complement;
     local eps2 := -eps1 + subs(x = beta, f);
     local sigma := 1/(eps2 + eps1);
     local h := _sign*(x-beta);
-        return sigma, sigma*(quo(eps2 + eps1 - f, h, x)), h;
+        return sigma, sigma*quo(eps2 + eps1 - f, h, x), h;
     end proc;
 
     findDeg2Complement := proc(f, lower_bound, upper_bound, x);
     local roots_f := RealDomain:-solve(f = 0, x);
         #local eps1 := -computeMin([[min(roots_f) <= x, x <= max(roots_f)]], f, x)[2];
-    local eps1 := -minimize(f, x= min(roots_f) .. max(roots_f));
+    local eps1 := -minimize(f, x = min(roots_f) .. max(roots_f));
     local eps2 := max(0, -eps1 + subs(x = lower_bound, f), -eps1 + subs(x = upper_bound, f));
     local sigma := 1/(eps2 + eps1);
     local alpha := RealDomain:-solve(eps2 + eps1 - f = 0, x);
         # There should be only two real roots of eps1 - f
     local h := -(x-alpha[1])*(x-alpha[2]);
-        return sigma, sigma*(quo(eps2 + eps1 - f, h, x)), h;
+        return sigma, sigma*quo(eps2 + eps1 - f, h, x), h;
     end proc;
-
-export splitBoundedCert;
-export splitUnboundedCertOneSide;
-export splitUnboundedCertBothSides;
-export splitUnboundedCert;
 
     splitBoundedCert := proc(t1, gen, x)
     local t2 := quo(gen, t1, x);
     local sigma, tau;
     local G := [gen];
+
         sigma, tau := basiclemma(t1, t2, [gen], x);
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma", sigma));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau", tau));
 
-    local sigma_cert := spCert(sigma, G, x);
-    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_cert", sigma_cert));
-    local tau_cert := spCert(tau, G, x);
-    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_cert", tau_cert));
+    local sigma_sos, sigma_rest;
+        sigma_sos, sigma_rest := extractSOSFactors(sigma, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_sos", sigma_sos));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_rest", sigma_rest));
+    local tau_sos, tau_rest;
+        tau_sos, tau_rest := extractSOSFactors(tau, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_sos", tau_sos));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_rest", tau_rest));
+
+    local sigma_cert := scalarprodCerts(sigma_sos, spCert(sigma_rest, G, x));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_cert", sigma_cert));
+    local tau_cert := scalarprodCerts(tau_sos, spCert(tau_rest, G, x));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_cert", tau_cert));
     local tau_gen_cert := [tau_cert[2]*gen^2, tau_cert[1]];
 
         return addCerts(scalarprodCerts(t1^2, sigma_cert), tau_gen_cert);
@@ -1567,7 +1620,12 @@ export splitUnboundedCert;
     local sigma_2, tau_2, h;
         sigma_2, tau_2, h := findDeg1Complement(gen, bl, x);
 
-    local h_cert := spCert(h, basis, x);
+    local h_sos, h_rest;
+        h_sos, h_rest := extractSOSFactors(h, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_sos", h_sos));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_rest", h_rest));
+
+    local h_cert := scalarprodCerts(h_sos, spCert(h_rest, basis, x));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_cert", h_cert));
 
         return h, addCerts(
@@ -1588,7 +1646,12 @@ export splitUnboundedCert;
     local sigma_2, tau_2, h;
         sigma_2, tau_2, h := findDeg2Complement(gen, a0, bl, x);
 
-    local h_cert := spCert(h, basis, x);
+    local h_sos, h_rest;
+        h_sos, h_rest := extractSOSFactors(h, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_sos", h_sos));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_rest", h_rest));
+
+    local h_cert := scalarprodCerts(h_sos, spCert(h_rest, basis, x));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h_cert", h_cert));
 
         return h, addCerts(
@@ -1602,7 +1665,7 @@ export splitUnboundedCert;
     local _deg := degree(gen, x);
     local h, gen_h_cert;
 
-        # TODO Investigate optimal lowerbound/upperbound 
+        # TODO Investigate optimal lowerbound/upperbound
         # for this block
         if type(_deg, odd) then
             if lcoeff(gen) > 0 then
@@ -1613,6 +1676,9 @@ export splitUnboundedCert;
         else
             h, gen_h_cert := splitUnboundedCertBothSides(gen, basis, a0 - 10, bl + 10, x);
         end if;
+
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> t1", t1));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> gen*h", gen*h));
 
     local t1_cert_in_gen_h := splitBoundedCert(t1, gen*h, x);
     local output_cert := scalarprodCerts(t1_cert_in_gen_h[2], gen_h_cert);

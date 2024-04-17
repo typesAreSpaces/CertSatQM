@@ -8,20 +8,20 @@ with(CertSatQM);
 basis := [(x+3)*(x+2)*(x-1), -(x+1)*(x-2)*(x-3)];
 #basis := [x+3, (x+2)*(x-1), (x+1)*(x-2), -x+3];
  
-semialg_nat := semiAlgebraicIntervals(basis, x);
-nat := natGens(semialg_nat, x);
+#semialg_nat := semiAlgebraicIntervals(basis, x);
+#nat := natGens(semialg_nat, x);
 
-split_basis := splitBasis(basis, semialg_nat, x);
-todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
+#split_basis := splitBasis(basis, semialg_nat, x);
+#todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
 
-#splitBoundedCert := proc(split_gen, gen, x)
-#ok := splitBoundedCert(x+3, -(x+3)*(x-3), x);
-#lprint(expand(ok[1]*1 + ok[2]*(-(x+3)*(x-3))));
+test1 := splitBoundedCert(x+3, -(x+3)*(x-3), x);
+lprint(">> test1", test1);
+lprint(expand(test[1]*1 + test[2]*(-(x+3)*(x-3))));
 
-#splitUnboundedCert := proc(t1, gen, basis, a0, bl, x);
+# Terminates
+#test2 := splitUnboundedCert(x+3, (x+3)*(x+2)*(x-1), basis, -3, 3, x);
+#lprint(">> test2", test2);
 
-#ok1 := splitUnboundedCert(x+3, (x+3)*(x+2)*(x-1), basis, -3, 3, x);
-#lprint(ok1);
-
-ok2 := splitUnboundedCert((x+3)*(x+2), (x+3)*(x+2)*(x-2)*(x-3), basis, -3, 3, x);
-lprint(">> ok2", ok2);
+# Terminates
+#test3 := splitUnboundedCert((x+3)*(x+2), (x+3)*(x+2)*(x-2)*(x-3), basis, -3, 3, x);
+#lprint(">> test3", test3);
