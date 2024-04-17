@@ -12,6 +12,7 @@ nat := natGens(semialg_nat, x);
 
 split_basis := splitBasis(basis, semialg_nat, x);
 todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
+lprint(todo);
 
 #lemma_4_7 := proc(nat_gen, G_fix, a0, a, b, bl, x)
 a0 := -3;
