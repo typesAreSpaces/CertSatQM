@@ -1619,6 +1619,9 @@ export splitUnboundedCert;
 
     local sigma_2, tau_2, h;
         sigma_2, tau_2, h := findDeg1Complement(gen, bl, x);
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> sigma_2", sigma_2));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> tau_2", tau_2));
+        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> h", h));
 
     local h_sos, h_rest;
         h_sos, h_rest := extractSOSFactors(h, x);
