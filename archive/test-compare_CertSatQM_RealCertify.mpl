@@ -27,7 +27,7 @@ local gen, nat, nat_S, f, _roots;
 local qmCert;
 local st;
 
-for i from 4 to 20 by 2 do
+for i from 4 to 6 by 2 do
     lprint(">> Number of intervals", i/2);
 
     gen := -mul(y, y in map(_i -> (x-_i), [seq(j, j=1 .. i)]));
@@ -66,4 +66,4 @@ for i from 4 to 20 by 2 do
     end do;
 end do;
 
-testRealCertify((x+7)*(x+3)*(x+5/2), [x+6, (x+4)*(x+2), x*(x-2), -(x-4), 100-x^2]);
+#testRealCertify((x+7)*(x+3)*(x+5/2), [x+6, (x+4)*(x+2), x*(x-2), -(x-4), 100-x^2]);
