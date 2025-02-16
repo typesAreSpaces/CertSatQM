@@ -16,11 +16,11 @@ todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
 
 test1 := splitBoundedCert(x+3, -(x+3)*(x-3), x);
 lprint(">> test1", test1);
-lprint(expand(test[1]*1 + test[2]*(-(x+3)*(x-3))));
+lprint(expand(test1[1]*1 + test1[2]*(-(x+3)*(x-3))));
 
 # Terminates
-test2 := splitUnboundedCert(x+3, (x+3)*(x+2)*(x-1), basis, -3, 3, x);
-lprint(">> test2", test2);
+#test2 := splitUnboundedCert(x+3, (x+3)*(x+2)*(x-1), basis, -3, 3, x);
+#lprint(">> test2", test2);
 
 # Terminates
 #test3 := splitUnboundedCert((x+3)*(x+2), (x+3)*(x+2)*(x-2)*(x-3), basis, -3, 3, x);

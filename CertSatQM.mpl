@@ -1,4 +1,4 @@
-$define ENABLE_DEBUGGING    false
+$define ENABLE_DEBUGGING    true
 $define ENABLE_VERIFICATION false
 
 $define ENABLE_VERIFICATION_LEMMA_4_7 false
@@ -47,7 +47,9 @@ $endif
 
 # --------------------
 local computeMin;
-local sqf, bound_info;
+local bound_info;
+local sqf;
+local sqfNat;
 # --------------------
 
 # Compute minimum of polynomial poly
@@ -119,7 +121,7 @@ $endif
         h := 1;
         f_u := L[1];
         for i to numelems(L[2]) do
-            if type(L[2][i][2], even) then
+            if type(L[2,i,2], even) then
                 h := h*L[2][i][1]^L[2][i][2];
             else
                 h := h*L[2][i][1]^(L[2][i][2] - 1);
@@ -129,6 +131,10 @@ $endif
         # f_u is the strictly positive polynomial
         # h is the sums of squares part
         return expand(f_u), h;
+    end proc;
+
+    sqfNat := proc(poly)
+      return 1;
     end proc;
 
     bound_info := proc(x, bound, eps)
@@ -290,7 +296,7 @@ export certInQM, checkCorrectnessQM;
         _po := zip(`=`, basisPO, _zerosPO);
         po := table(_po);
         return po;
-    end proc;
+    end proc; 
 
     # Input:
     # nat is the natural generator basis
@@ -326,17 +332,25 @@ export certInQM, checkCorrectnessQM;
     local i, j;
     local output := zeroPO(nat);
     local _indices := [indices(p1, 'nolist')];
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _indices", _indices));
     local size := nops(_indices);
     local _sos, _basis;
         for i from 1 to size do
             for j from 1 to size do
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> i j", i, j));
                 if evalb(_indices[i] = _indices[j]) then
                     output[1] := output[1] + _indices[i]^2*p1[_indices[i]]*p2[_indices[j]];
                 else
+                    # TODO: refactor this section
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _indices[i]", _indices[i]));
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> _indices[j]", _indices[j]));
                     _basis, _sos := sqf(_indices[i]*_indices[j]);
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 1.1 _basis", _basis));
                     _sos, _basis := auxiliarSosStep(_sos, _basis, x);
+                    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 1.2 _basis", _basis));
                     output[_basis] :=
                     output[_basis] + _sos*p1[_indices[i]]*p2[_indices[j]];
+                    # TODO: refactor this section
                 end if;
             end do;
         end do;
@@ -349,7 +363,7 @@ export certInQM, checkCorrectnessQM;
     scalarProdPO := proc(p, sos, nat, x)
     local i;
     local output := zeroPO(nat);
-    local _indices := [indices(p1, 'nolist')];
+    local _indices := [indices(p, 'nolist')];
         for i from 1 to nops(_indices) do
             output[_indices[i]] := sos*p[_indices[i]];
         end do;
@@ -505,7 +519,10 @@ export certInQM, checkCorrectnessQM;
 
     local intervals := semiAlgebraicIntervals(basis, x);
     local nat := natGens(intervals, x);
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> nat", nat));
     local output := unitPO(nat), _temp;
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> output"));
+    DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
     local todo;
 
     local factorable_sos, simpl_roots;
@@ -521,7 +538,14 @@ export certInQM, checkCorrectnessQM;
             _temp := zeroPO(nat);
             updatePONatEntry(_temp,     1, a - c1);
             updatePONatEntry(_temp, x - a,      1);
-            output := prodPO(output, _temp, nat, x)
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 1. _temp"));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(_temp));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 1.1 output"));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
+            # TODO: Fix bug in `prodPO'
+            output := prodPO(output, _temp, nat, x);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 1.2 output"));
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
         end do;
 
         # Update output using in between factors
@@ -541,6 +565,7 @@ export certInQM, checkCorrectnessQM;
                 updatePONatEntry(_temp,           1, (x-c1)*(x-c2) - _gamma*(x-a)*(x-b));
                 updatePONatEntry(_temp, (x-a)*(x-b),                             _gamma);
                 output := prodPO(output, _temp, nat, x);
+                DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 2. output", output));
 
                 j := j + 1;
                 k := k - 1;
@@ -554,13 +579,14 @@ export certInQM, checkCorrectnessQM;
             _temp := zeroPO(nat);
             updatePONatEntry(_temp,        1, c2 - b);
             updatePONatEntry(_temp, -(x - b),      1);
-            output := prodPO(output, _temp, nat, x)
+            output := prodPO(output, _temp, nat, x);
+            DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> 3. output", output));
         end do;
 
         #
         # Verify output
         #
-        DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
+        #DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, print(output));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, checkSosMultipliers(output));
         DEBUG(__FILE__, __LINE__, ENABLE_DEBUGGING, lprint(">> Check correctness (difference should be zero):", checkCorrectnessPO(output, factorable_sos, f)));
 
