@@ -32,11 +32,11 @@ end proc;
 # nat is the natural generator basis
 # encoded as a list of polynomials
 addPO := proc(p1, p2, nat)
-local i;
 local output := zeroPO(nat);
-local _indices := [indices(p1, 'nolist')];
-  for i from 1 to nops(_indices) do
-    output[_indices[i]] := p1[_indices[i]] + p2[_indices[i]];
+local l := 2^nops(nat) - 1;
+local i;
+  for i from 0 to l do
+    output[i] := p1[i] + p2[i];
   end do;
   return output;
 end proc;
@@ -46,10 +46,10 @@ end proc;
 # encoded as a list of polynomials
 scalarProdPO := proc(p1, sos, nat, x)
 local i;
+local l := 2^nops(nat) - 1;
 local output := zeroPO(nat);
-local _indices := [indices(p1, 'nolist')];
-  for i from 1 to nops(_indices) do
-    output[_indices[i]] := sos*p[_indices[i]];
+  for i from 0 to l do
+    output[i] := sos*p[i];
   end do;
   return output;
 end proc;
