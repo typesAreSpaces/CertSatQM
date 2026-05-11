@@ -1,0 +1,236 @@
+maple test-simple.mpl
+    |\^/|     Maple 2022 (APPLE ARM64 MACOS)
+._|\|   |/|_. Copyright (c) Maplesoft, a division of Waterloo Maple Inc. 2022
+ \  MAPLE  /  All rights reserved. Maple is a trademark of
+ <____ ____>  Waterloo Maple Inc.
+      |       Type ? for help.
+> restart;
+
+> with(CertSatQM):
+
+#printlevel := -1;
+#printlevel := 8;
+
+> read "nat_gens.mpl";
+                                [SemiAlgebraic]
+
+bound_info1 := proc(x, ineq, eps)
+local i1, i2, j1, j2;
+    if nops(ineq) = 2 then
+        i1 := simplify(op(ineq[1])[1]);
+        i2 := simplify(op(ineq[1])[2]);
+        j1 := simplify(op(ineq[2])[1]);
+        j2 := simplify(op(ineq[2])[2]);
+        if evalb(i1 = x) then
+            if evalb(j1 = x) then
+                return [min(i2, j2) + eps, max(i2, j2) - eps]
+            else return [min(i2, j1) + eps, max(i2, j1) - eps]
+            end if
+        else
+            if evalb(j1 = x) then
+                return [min(i1, j2) + eps, max(i1, j2) - eps]
+            else return [min(i1, j1) + eps, max(i1, j1) - eps]
+            end if
+        end if
+    else
+        i1 := simplify(op(ineq[1])[1]);
+        j1 := simplify(op(ineq[1])[2]);
+        if type(ineq[1], `=`) then
+            if evalb(i1 = x) then return [j1, j1]
+            else return [i1, i1]
+            end if
+        end if;
+        if type(ineq[1], `<=`) then
+            if evalb(i1 = x) then return [-infinity, j1 - eps]
+            else return [i1 + eps, infinity]
+            end if
+        end if
+    end if
+end proc
+
+gen_nat_gens := proc(basis, x)
+local S, intervals, size, i, out;
+    S := SolveTools:-SemiAlgebraic(map(f -> 0 <= f, basis), [x]);
+    intervals := map(ineq -> bound_info1(x, ineq, 0), S);
+    size := nops(intervals);
+    out := [];
+    if size = 0 then return out end if;
+    out := [x - intervals[1][1]];
+    for i to size - 1 do
+        out := [op(out), (x - intervals[i][2])*(x - intervals[i + 1][1])]
+    end do;
+    out := [op(out), -x + intervals[size][2]];
+    return out
+end proc
+
+getArchimedeanPolynomial := proc(x, intervals)
+local max_point;
+    max_point :=
+        max(abs(intervals[1, 1]), abs(intervals[nops(intervals), 2]));
+    return max_point^2 - x^2
+end proc
+
+
+> simple_test := proc(f, gens, x)
+> local a_0, b_k;
+> local nat, nat_S, _roots;
+> local qmCert;
+> local st;
+
+>   lprint(">> gens ", gens);
+>   lprint(">> f", f);
+
+>   nat := gen_nat_gens(gens, x);
+
+>   nat_S := semiAlgebraicIntervals(nat, x);
+>   a_0 := nat_S[1, 1];
+>   b_k := nat_S[nops(nat_S), 2];
+
+>   arch_poly := getArchimedeanPolynomial(x, nat_S);
+>   nat_ext := [op(nat), arch_poly];
+
+>   st := time();
+>   qmCert := certInQM(f, nat, a_0, b_k, x);
+>   lprint(">> Time CertSatQM", time() - st);
+>   print(">> Result", qmCert);
+>   #print(">> Is correct?", checkCorrectnessQM(qmCert, f));
+> end proc;
+Warning, (in simple_test) `arch_poly` is implicitly declared local
+|test-simple.mpl:25|
+Warning, (in simple_test) `nat_ext` is implicitly declared local
+|test-simple.mpl:26|
+simple_test := proc(f, gens, x)
+local a_0, b_k, nat, nat_S, _roots, qmCert, st, arch_poly, nat_ext;
+    lprint(">> gens ", gens);
+    lprint(">> f", f);
+    nat := gen_nat_gens(gens, x);
+    nat_S := CertSatQM:-semiAlgebraicIntervals(nat, x);
+    a_0 := nat_S[1, 1];
+    b_k := nat_S[nops(nat_S), 2];
+    arch_poly := getArchimedeanPolynomial(x, nat_S);
+    nat_ext := [op(nat), arch_poly];
+    st := time();
+    qmCert := CertSatQM:-certInQM(f, nat, a_0, b_k, x);
+    lprint(">> Time CertSatQM", time() - st);
+    print(">> Result", qmCert)
+end proc
+
+
+#i := 4;
+#gens := [-mul(y, y in map(_i -> (x-_i), [seq(j, j=1 .. i)]))];
+#f := x;
+#simple_test(f, gens, x);
+
+#simple_test(x+2, [(x+1)*(x-1), -(x+1)*(x-1)], x);
+
+> simple_test(
+> x+19/100, 
+> [(x-851/100)*(x-99/10)*(x-249/25), -(x-851/100)*(x-99/10)*(x-249/25)], 
+> x);
+">> gens ", [(x-851/100)*(x-99/10)*(x-249/25), -(x-851/100)*(x-99/10)*(x-249/25
+)]
+">> f", x+19/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 535
+">> nat", [x-851/100, (x-851/100)*(x-99/10), (x-99/10)*(x-249/25), -x+249/25]
+">> Debugging file ", "CertSatQM.mpl", " at line ", 541
+">> simpl_roots"
+">> Debugging file ", "CertSatQM.mpl", " at line ", 542
+   -19               851          851  99          99  249
+[[[---], [-infinity, ---]], [[], [---, --]], [[], [--, ---]],
+   100               100          100  10          10  25
+
+          249
+    [[], [---, infinity]]]
+          25
+
+">> Debugging file ", "CertSatQM.mpl", " at line ", 594
+                              ">> Entries of po:"
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+                                       []
+
+">> Debugging file ", "CertSatQM.mpl", " at line ", 595
+">> Debugging file ", "CertSatQM.mpl", " at line ", 521
+">> Original polynomial: ", x+19/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 522
+">> Result: ", 1
+">> Check correctness (difference should be zero):", 81/100-x
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1212
+">> certPO"
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1213
+           87
+table([0 = --, 1 = 1, 2 = 0, 3 = 0, 4 = 0, 5 = 0, 6 = 0, 7 = 0, 9 = 0, 8 = 0,
+           10
+
+    11 = 0, 10 = 0, 13 = 0, 12 = 0, 15 = 0,
+
+    14 = 0
+
+    ])
+
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1216
+">> basis@certInQM", 0
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1238
+" "
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1216
+">> basis@certInQM", 1
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1230
+">> Done 1 one step within gen@certInQM", 1
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1231
+">> Done 2 one step within gen@certInQM", x-851/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1097
+">> @prodQM fromQMtoPoly q1", 1
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1099
+">> @prodQM fromQMtoPoly q2", x-851/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1148
+">> @prodQM fromQMtoPoly output", x-851/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1149
+">> @prodQM haha check", true
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1233
+">> Done 3 one step within gen@certInQM", x-851/100
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1234
+">>"
+">> Debugging file ", "CertSatQM.mpl", " at line ", 1238
+" "
+">> Time CertSatQM", .40e-1
+                        87       249          851       2   1841     84249
+">> Result", table([1 = --, -x + --- = 0, x - --- = 1, x  - ---- x + ----- = 0,
+                        10       25           100           100      1000
+
+     2   993     24651
+    x  - --- x + ----- = 0
+         50       250
+
+    ])
+
+> quit
+memory used=20.2MB, alloc=43.3MB, time=0.11
