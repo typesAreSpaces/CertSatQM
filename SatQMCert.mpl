@@ -37,7 +37,7 @@ with(Bits, And, Split, Xor);
 
 #currentdir(_pwd);
 
-CertSatQM := module() option package;
+SatQMCert := module() option package;
     
 $ifdef LOG_TIME
 local stack_level := -1;

@@ -1,6 +1,6 @@
 restart;
 
-with(CertSatQM):
+with(SatQMCert):
 
 printlevel := -1;
 #printlevel := 8;
@@ -30,7 +30,7 @@ test := proc()
         qmCert := certInQM(arch_poly, nat, a_0, b_k, x);
         #print(">> Result", qmCert);
         print(">> Is correct?", checkCorrectnessQM(qmCert, arch_poly));
-        print(">> Time CertSatQM", time() - st);
+        print(">> Time SatQMCert", time() - st);
 
 
         #for j from 2 to i/2 - 1 do
@@ -40,7 +40,7 @@ test := proc()
 
         #st := time();
         #qmCert := certInQM(f, nat, a_0, b_k, x);
-        #print(">> Time CertSatQM", time() - st);
+        #print(">> Time SatQMCert", time() - st);
         ##print(">> Result", qmCert);
         ##print(">> Is correct?", checkCorrectnessQM(qmCert, f));
         #end do;

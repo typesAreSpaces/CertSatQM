@@ -1,4 +1,4 @@
-with(CertSatQM);
+with(SatQMCert);
 
 #printlevel := -1;
 #printlevel := 8;

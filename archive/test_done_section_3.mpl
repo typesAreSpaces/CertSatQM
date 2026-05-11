@@ -1,6 +1,6 @@
 restart;
 
-with(CertSatQM):
+with(SatQMCert):
 
 check := proc(f, nat, a, b, x)
     qmCert := certInQM(f, nat, a, b, x);

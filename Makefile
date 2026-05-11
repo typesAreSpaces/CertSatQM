@@ -1,4 +1,4 @@
-PROJECT_NAME=CertSatQM
+PROJECT_NAME=SatQMCert
 TEST_FILE=test.mpl
 SUFFIX=
 LOG_FILE=log_time${SUFFIX}.txt

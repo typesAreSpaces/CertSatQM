@@ -1,6 +1,6 @@
 restart;
 
-with(CertSatQM):
+with(SatQMCert):
 
 #printlevel := -1;
 #printlevel := 8;
@@ -51,7 +51,7 @@ for i from 4 to 6 by 2 do
 
         st := time();
         qmCert := certInQM(f, nat, a_0, b_k, x);
-        print(">> Time CertSatQM", time() - st);
+        print(">> Time SatQMCert", time() - st);
         #print(">> Result", qmCert);
         #print(">> Is correct?", checkCorrectnessQM(qmCert, f));
 

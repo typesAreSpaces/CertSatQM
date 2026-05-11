@@ -15,7 +15,7 @@ def average(l):
 
 outLine = re.compile('.*>>.*')
 
-file = open('../data/output_CertSatQM_endpoints.txt', 'r')
+file = open('../data/output_SatQMCert_endpoints.txt', 'r')
 
 table = {}
 times = []
@@ -50,7 +50,7 @@ while True:
                     state = STATE_READ_BASIS
                 if word == '">> Archimedean Poly"':
                     state = STATE_READ_ARCH_POLY
-                if word == '">> Time CertSatQM"':
+                if word == '">> Time SatQMCert"':
                     state = STATE_READ_TIME_CERTSATQM
                 continue
 
