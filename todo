@@ -1,3 +1,0 @@
-./scripts/process_CertSatQM.py:18:file = open('../data/output_CertSatQM_endpoints.txt', 'r')
-./scripts/process_CertSatQM.py:53:                if word == '">> Time CertSatQM"':
-Binary file ./.git/index matches
