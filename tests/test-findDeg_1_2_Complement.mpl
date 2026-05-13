@@ -5,6 +5,9 @@ with(SatQMCert);
 #printlevel := -1;
 #printlevel := 5;
 
+# Replace 'local' by 'export' in
+# declaration of findDeg2Complement to check this test 
+
 basis := [(x+3)*(x+2)*(x-1), -(x+1)*(x-2)*(x-3)];
 #basis := [x+3, (x+2)*(x-1), (x+1)*(x-2), -x+3];
  
@@ -28,14 +31,14 @@ todo := extractInbetweenSplitFactors(split_basis[2], -2, 2, x);
 #sigma, tau, h := findDeg2Complement(f1, -20, 20, x);
 #lprint(expand(sigma*f + tau*h));
 
-f2 := (x+2)*x^2*(x+1);
-sigma, tau, h := findDeg2Complement(f2, -20, 20, x);
-lprint(expand(evala(sigma*f2 + tau*h)));
-sigma, tau, h := findDeg2Complement(f2, -3, 3, x);
-lprint(expand(evala(sigma*f2 + tau*h)));
+#f2 := (x+2)*x^2*(x+1);
+#sigma, tau, h := findDeg2Complement(f2, -20, 20, x);
+#lprint(expand(evala(sigma*f2 + tau*h)));
+#sigma, tau, h := findDeg2Complement(f2, -3, 3, x);
+#lprint(expand(evala(sigma*f2 + tau*h)));
 
-f3 := (x+2)*x*(x+1)^2;
-sigma, tau, h := findDeg2Complement(f3, -20, 20, x);
-lprint(expand(evala(sigma*f3 + tau*h)));
-sigma, tau, h := findDeg2Complement(f3, -3, 3, x);
-lprint(expand(evala(sigma*f3 + tau*h)));
+#f3 := (x+2)*x*(x+1)^2;
+#sigma, tau, h := findDeg2Complement(f3, -20, 20, x);
+#lprint(expand(evala(sigma*f3 + tau*h)));
+#sigma, tau, h := findDeg2Complement(f3, -3, 3, x);
+#lprint(expand(evala(sigma*f3 + tau*h)));

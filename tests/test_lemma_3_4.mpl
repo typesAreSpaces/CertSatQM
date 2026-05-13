@@ -5,6 +5,9 @@ with(SatQMCert):
 #printlevel := -1;
 #printlevel := 8;
 
+# Replace 'local' by 'export' in
+# declaration of case_3_5 to check this test 
+
 a := 12;
 b := 4;
 c := 2;
@@ -32,15 +35,8 @@ g4 := -(x-e);
 # Goal compute certificates of 
 # g2 in QM(g1*g2*g3*g4)
 
-s0, s1 := lemma_3_4(a, b, c, d, e, x);
+#s0, s1 := lemma_3_4(a, b, c, d, e, x);
 
-lprint(">> s0", s0);
-lprint(">> s1", s1);
-lprint(evalb(expand(s0 + s1*g1*g2*g3*g4 - g2) = 0));
-
-#SemiAlgebraic([s0 < 0], [x]);
-#SemiAlgebraic([s1 < 0], [x]);
-
-#R := PolynomialRing([x]);
-#IsEmpty([s0 < 0], R);
-#IsEmpty([s1 < 0], R);
+#lprint(">> s0", s0);
+#lprint(">> s1", s1);
+#lprint(evalb(expand(s0 + s1*g1*g2*g3*g4 - g2) = 0));

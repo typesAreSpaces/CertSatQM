@@ -19,4 +19,4 @@ a0 := -3;
 bl := 3;
 a := -2;
 b := 2;
-lprint(lemma_4_7(todo, a0, a, b, bl, x));
+#lprint(lemma_4_7(todo, a0, a, b, bl, x));

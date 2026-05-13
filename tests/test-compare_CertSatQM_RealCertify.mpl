@@ -9,7 +9,7 @@ read "nat_gens.mpl";
 
 _pwd := currentdir();
 currentdir(homedir);
-currentdir("Documents/GithubProjects/RealCertify");
+currentdir("Documents/Projects/dev/RealCertify");
 read "multivsos/multivsos.mm";
 
 #currentdir(_pwd);
