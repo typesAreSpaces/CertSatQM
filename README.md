@@ -1,3 +1,61 @@
 # SatCertQM
 
-This maple package implements the algorithm in 
+The package `SatCertQM` implements the algorithm in TODO to compute
+certificates of elements in saturated quadratic module. The algorithm is
+fully symbolic in the sense that it does not depend on numerical
+algorithm to obtain certificates.
+
+## Dependencies
+
+- [BasicLemmaCert](https://github.com/typesAreSpaces/BasicLemmaCert):
+  This maple package implements an algorithm of Lemma 2.1 in (Kuhlmann
+  et al. 2005).
+- [StrictlyPositiveCert](https://github.com/typesAreSpaces/StrictlyPositiveCert):
+  This maple package implements the algorithm `Algorithm 4` proposed in
+  (Shang et al. 2025) which is used to compute certificates of strictly
+  positive polynomial on Archimedean quadratic modules.
+- (Optional)[RealCertify](https://gricad-gitlab.univ-grenoble-alpes.fr/magronv/RealCertify):
+  `RealCertify` is a maple package that also computes certificates of
+  strictly positive polynomial over Archimedean quadratic modules. It
+  can be used instead of `StrictlyPositiveCert` and it is used in some
+  comparision benchmarks.
+
+## Installation
+
+Use the `make` command at the root of the project to produce the maple
+library file `SatCertQM.mla`. Then, load the `SatCertQM` package by
+adding the following two lines at the beginning of your maple file:
+
+    libname := libname, "/Users/typesarespaces/Documents/Projects/dev/SatQMCert":
+    with(SatQMCert):
+
+## Usage and examples
+
+The command `certInQM` has the following inputs:
+
+- `f`: Denotes the input polynomial
+- `nat`: Denotes the set of natural generators associated to the
+  original generators
+- `a_0`: Denotes the minimum point in the semialgebraic set associated
+  to the original generators
+- `b_k`: Denotes the maximum point in the semialgebraic set associated
+  to the original generators
+- `x`: Denotes the free variable of the ring of univariate polynomial
+
+For examples, check the directory `tests`.
+
+## References
+
+
+
+Kuhlmann, S., M. Marshall, and N. Schwartz. 2005. *Positivity, Sums of
+Squares and the Multi-Dimensional Moment Problem II*. 5 (4): 583--606.
+<https://doi.org/10.1515/advg.2005.5.4.583>.
+
+
+
+Shang, Weifeng, Chenqi Mou, Jose Abel Castellanos Joo, and Deepak Kapur.
+2025. *Computing Certificates of Strictly Positive Polynomials in
+Archimedean Quadratic Modules*. <https://arxiv.org/abs/2503.11119>.
+
+
