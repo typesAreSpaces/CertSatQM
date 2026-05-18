@@ -1,6 +1,6 @@
-# SatCertQM
+# SatQMCert
 
-The package `SatCertQM` implements the algorithm in TODO to compute
+The package `SatQMCert` implements the algorithm in TODO to compute
 certificates of elements in saturated quadratic module. The algorithm is
 fully symbolic in the sense that it does not depend on numerical
 algorithm to obtain certificates.
@@ -23,10 +23,10 @@ algorithm to obtain certificates.
 ## Installation
 
 Use the `make` command at the root of the project to produce the maple
-library file `SatCertQM.mla`. Then, load the `SatCertQM` package by
+library file `SatQMCert.mla`. Then, load the `SatQMCert` package by
 adding the following two lines at the beginning of your maple file:
 
-    libname := libname, "<PATH-TO-SATCERTQM>/SatCertQM.mla":
+    libname := libname, "<PATH-TO-SATQMCERT>/SatQMCert.mla":
     with(SatQMCert):
 
 ## Usage and examples
@@ -54,8 +54,7 @@ Squares and the Multi-Dimensional Moment Problem II*. 5 (4): 583--606.
 
 
 
-Shang, Weifeng, Chenqi Mou, Jose Abel Castellanos Joo, and Deepak Kapur.
-2025. *Computing Certificates of Strictly Positive Polynomials in
+Shang, Weifeng, Chenqi Mou, Jose Abel Castellanos Joo, and Deepak Kapur. 2025. *Computing Certificates of Strictly Positive Polynomials in
 Archimedean Quadratic Modules*. <https://arxiv.org/abs/2503.11119>.
 
 
