@@ -1,6 +1,6 @@
 restart;
 
-libname := libname, "/Users/typesarespaces/Documents/Projects/dev/SatQMCert":
+libname := libname, "/Users/typesarespaces/Documents/Projects/dev/SatQMCert/SatQMCert.mla":
 with(SatQMCert):
 
 #printlevel := -1;

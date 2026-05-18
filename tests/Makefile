@@ -1,4 +1,4 @@
-TEST_FILE=test-lemma_4_7.mpl
+TEST_FILE=test-simple.mpl
 SUFFIX=
 LOG_FILE=log_time${SUFFIX}.txt
 OUTPUT=output${SUFFIX}.txt
