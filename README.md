@@ -26,7 +26,7 @@ Use the `make` command at the root of the project to produce the maple
 library file `SatCertQM.mla`. Then, load the `SatCertQM` package by
 adding the following two lines at the beginning of your maple file:
 
-    libname := libname, "/Users/typesarespaces/Documents/Projects/dev/SatQMCert":
+    libname := libname, "<PATH-TO-SATCERTQM>":
     with(SatQMCert):
 
 ## Usage and examples
