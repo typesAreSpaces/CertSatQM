@@ -7,7 +7,7 @@ algorithm to obtain certificates.
 
 ## Dependencies
 
-- [BasicLemmaCert](https://github.com/typesAreSpaces/BasicLemmaCert):
+- [BasicLemma](https://github.com/typesAreSpaces/BasicLemma):
   This maple package implements an algorithm of Lemma 2.1 in (Kuhlmann
   et al. 2005).
 - [StrictlyPositiveCert](https://github.com/typesAreSpaces/StrictlyPositiveCert):
