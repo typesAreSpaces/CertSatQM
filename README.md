@@ -1,7 +1,9 @@
 # SatQMCert
 
-The package `SatQMCert` implements the algorithm in TODO to compute
-certificates of elements in saturated quadratic module. The algorithm is
+The package `SatQMCert` implements the algorithm in (Castellanos-Joo and
+Kapur 2026) to compute
+certificates of elements in saturated quadratic module. The algorithm
+is
 fully symbolic in the sense that it does not depend on numerical
 algorithm to obtain certificates.
 
@@ -9,10 +11,10 @@ algorithm to obtain certificates.
 
 - [BasicLemma](https://github.com/typesAreSpaces/BasicLemma):
   This maple package implements an algorithm of Lemma 2.1 in (Kuhlmann
-  et al. 2005).
+  et al. 2005).
 - [StrictlyPositiveCert](https://github.com/typesAreSpaces/StrictlyPositiveCert):
   This maple package implements the algorithm `Algorithm 4` proposed in
-  (Shang et al. 2025) which is used to compute certificates of strictly
+  (Shang et al. 2025) which is used to compute certificates of strictly
   positive polynomial on Archimedean quadratic modules.
 - (Optional)[RealCertify](https://gricad-gitlab.univ-grenoble-alpes.fr/magronv/RealCertify):
   `RealCertify` is a maple package that also computes certificates of
@@ -46,15 +48,18 @@ For examples, check the directory `tests`.
 
 ## References
 
-
-
 Kuhlmann, S., M. Marshall, and N. Schwartz. 2005. *Positivity, Sums of
 Squares and the Multi-Dimensional Moment Problem II*. 5 (4): 583--606.
 <https://doi.org/10.1515/advg.2005.5.4.583>.
 
-
-
-Shang, Weifeng, Chenqi Mou, Jose Abel Castellanos Joo, and Deepak Kapur. 2025. *Computing Certificates of Strictly Positive Polynomials in
+Shang, Weifeng, Chenqi Mou, Jose Abel Castellanos Joo, and Deepak Kapur.
+2025. *Computing Certificates of Strictly Positive Polynomials in
 Archimedean Quadratic Modules*. <https://arxiv.org/abs/2503.11119>.
+
+
+
+Castellanos-Joo, Jose Abel, and Deepak Kapur. 2026. *Computing
+Certificates in Archimedean Univariate Saturated Quadratic Modules*.
+<https://arxiv.org/abs/2605.18980>.
 
 
