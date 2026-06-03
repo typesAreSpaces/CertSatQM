@@ -25,18 +25,6 @@ with(RegularChains, SemiAlgebraicSetTools, PolynomialRing);
 with(SemiAlgebraicSetTools, IsEmpty);
 with(Bits, And, Split, Xor);
 
-#_pwd := currentdir();
-#currentdir(homedir);
-#currentdir("Documents/GithubProjects/RealCertify");
-
-#read "univsos/univsos1.mm";
-#read "univsos/univsos2.mm";
-#read "univsos/univsos3.mm";
-
-#read "multivsos/multivsos.mm";
-
-#currentdir(_pwd);
-
 SatQMCert := module() option package;
     
 $ifdef LOG_TIME
